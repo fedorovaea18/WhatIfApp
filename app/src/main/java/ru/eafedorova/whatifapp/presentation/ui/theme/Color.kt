@@ -1,4 +1,4 @@
-package ru.eafedorova.whatifapp.ui.theme
+package ru.eafedorova.whatifapp.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

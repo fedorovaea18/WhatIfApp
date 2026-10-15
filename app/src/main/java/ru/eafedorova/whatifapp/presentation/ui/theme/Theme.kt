@@ -1,6 +1,5 @@
-package ru.eafedorova.whatifapp.ui.theme
+package ru.eafedorova.whatifapp.presentation.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
