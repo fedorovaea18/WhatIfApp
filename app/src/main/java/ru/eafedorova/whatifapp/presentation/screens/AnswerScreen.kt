@@ -17,12 +17,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import ru.eafedorova.whatifapp.data.Answer
+import ru.eafedorova.whatifapp.data.Question
+import ru.eafedorova.whatifapp.data.QuestionRepository
 
 @Composable
-fun AnswerScreen(question: String, onBack: () -> Unit) {
+fun AnswerScreen(question: Question, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val repository = remember { QuestionRepository.create(context) }
+    val scope = rememberCoroutineScope()
+
     var text by remember { mutableStateOf("") }
 
     Column(
@@ -31,7 +41,7 @@ fun AnswerScreen(question: String, onBack: () -> Unit) {
             .padding(24.dp)
     ) {
         Text(
-            text = question,
+            text = question.text,
             style = MaterialTheme.typography.titleLarge
         )
 
@@ -56,10 +66,21 @@ fun AnswerScreen(question: String, onBack: () -> Unit) {
                 onClick = onBack,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Назад")
+                Text("← Назад")
             }
             Button(
-                onClick = onBack,
+                onClick = {
+                    scope.launch {
+                        repository.saveAnswer(
+                            Answer(
+                                questionId = question.id,
+                                questionText = question.text,
+                                answerText = text.trim()
+                            )
+                        )
+                        onBack()
+                    }
+                },
                 enabled = text.isNotBlank(),
                 modifier = Modifier.weight(1f)
             ) {
