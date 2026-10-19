@@ -12,6 +12,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +31,10 @@ import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.data.QuestionRepository
 
 @Composable
-fun HomeScreen(onAnswerClick: (Question) -> Unit) {
+fun HomeScreen(
+    onAnswerClick: (Question) -> Unit,
+    onHistoryClick: () -> Unit
+) {
     val context = LocalContext.current
     val repository = remember { QuestionRepository.create(context) }
     val scope = rememberCoroutineScope()
@@ -101,6 +105,15 @@ fun HomeScreen(onAnswerClick: (Question) -> Unit) {
             enabled = question != null
         ) {
             Text("Ответить")
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onHistoryClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Мои ответы")
         }
     }
 }

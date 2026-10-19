@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import ru.eafedorova.whatifapp.data.AppDatabase
 import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.presentation.screens.AnswerScreen
+import ru.eafedorova.whatifapp.presentation.screens.HistoryScreen
 import ru.eafedorova.whatifapp.presentation.screens.HomeScreen
 
 sealed class Screen(val route: String) {
@@ -22,6 +22,7 @@ sealed class Screen(val route: String) {
     object Answer : Screen("answer/{questionId}") {
         fun create(questionId: Long): String = "answer/$questionId"
     }
+    object History : Screen("history")
 }
 
 @Composable
@@ -37,6 +38,9 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             HomeScreen(
                 onAnswerClick = { question ->
                     navController.navigate(Screen.Answer.create(question.id))
+                },
+                onHistoryClick = {                    // ← добавить
+                    navController.navigate(Screen.History.route)
                 }
             )
         }
@@ -53,6 +57,9 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             question?.let {
                 AnswerScreen(question = it, onBack = { navController.popBackStack() })
             }
+        }
+        composable(Screen.History.route) {
+            HistoryScreen(onBack = { navController.popBackStack() })
         }
     }
 }
