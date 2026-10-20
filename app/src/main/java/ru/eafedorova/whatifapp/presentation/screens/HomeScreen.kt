@@ -2,15 +2,19 @@ package ru.eafedorova.whatifapp.presentation.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,11 +33,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.data.QuestionRepository
+import ru.eafedorova.whatifapp.data.categories
 
 @Composable
 fun HomeScreen(
     onAnswerClick: (Question) -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onStatsClick: () -> Unit
 ) {
     val context = LocalContext.current
     val repository = remember { QuestionRepository.create(context) }
@@ -41,10 +47,17 @@ fun HomeScreen(
 
     var question by remember { mutableStateOf<Question?>(null) }
     var loading by remember { mutableStateOf(true) }
+    var selectedCategories by remember { mutableStateOf(setOf("all")) }
 
     LaunchedEffect(Unit) {
         repository.ensureSeeded()
-        question = repository.randomQuestion()
+        question = repository.randomQuestion(selectedCategories)
+        loading = false
+    }
+
+    LaunchedEffect(selectedCategories) {
+        loading = true
+        question = repository.randomQuestion(selectedCategories)
         loading = false
     }
 
@@ -61,7 +74,43 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(16.dp))
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(categories) { (key, label) ->
+                val isSelected = key in selectedCategories
+
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        selectedCategories = when {
+                            key == "all" -> setOf("all")
+
+                            isSelected -> {
+                                val newSet = selectedCategories - key
+                                if (newSet.isEmpty() || newSet == setOf("all")) {
+                                    setOf("all")
+                                } else {
+                                    newSet
+                                }
+                            }
+
+                            else -> {
+                                val base = selectedCategories - "all"
+                                base + key
+                            }
+                        }
+                    },
+                    label = { Text(label) }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
 
         if (loading || question == null) {
             CircularProgressIndicator()
@@ -87,7 +136,7 @@ fun HomeScreen(
             onClick = {
                 scope.launch {
                     loading = true
-                    question = repository.randomQuestion()
+                    question = repository.randomQuestion(selectedCategories)
                     loading = false
                 }
             },
@@ -114,6 +163,15 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Мои ответы")
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onStatsClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Статистика")
         }
     }
 }

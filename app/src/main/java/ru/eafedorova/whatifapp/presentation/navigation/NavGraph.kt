@@ -16,13 +16,16 @@ import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.presentation.screens.AnswerScreen
 import ru.eafedorova.whatifapp.presentation.screens.HistoryScreen
 import ru.eafedorova.whatifapp.presentation.screens.HomeScreen
+import ru.eafedorova.whatifapp.presentation.screens.StatsScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Answer : Screen("answer/{questionId}") {
         fun create(questionId: Long): String = "answer/$questionId"
     }
+
     object History : Screen("history")
+    object Stats : Screen("stats")
 }
 
 @Composable
@@ -39,11 +42,15 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 onAnswerClick = { question ->
                     navController.navigate(Screen.Answer.create(question.id))
                 },
-                onHistoryClick = {                    // ← добавить
+                onHistoryClick = {
                     navController.navigate(Screen.History.route)
+                },
+                onStatsClick = {
+                    navController.navigate(Screen.Stats.route)
                 }
             )
         }
+
         composable(Screen.Answer.route) { backStackEntry ->
             val questionId = backStackEntry.arguments?.getString("questionId")?.toLongOrNull()
             var question by remember { mutableStateOf<Question?>(null) }
@@ -60,6 +67,10 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(Screen.History.route) {
             HistoryScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Stats.route) {                  // ← добавить
+            StatsScreen(onBack = { navController.popBackStack() })
         }
     }
 }
