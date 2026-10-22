@@ -10,5 +10,6 @@ data class Answer(
     val questionId: Long,
     val questionText: String,
     val answerText: String,
+    val voicePath: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
