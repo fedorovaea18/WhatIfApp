@@ -15,8 +15,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -122,12 +123,13 @@ fun HistoryScreen(onBack: () -> Unit) {
                                 }
                             }
                         },
-                        onLongClick = { answerToDelete = answer }
+                        onDeleteClick = { answerToDelete = answer }
                     )
                 }
             }
         }
     }
+
 
     answerToDelete?.let { answer ->
         AlertDialog(
@@ -168,7 +170,7 @@ private fun AnswerCard(
     isPlaying: Boolean,
     player: VoicePlayer,
     onPlayPause: () -> Unit,
-    onLongClick: () -> Unit
+    onDeleteClick: () -> Unit
 ) {
     val position by player.position.collectAsState()
     val duration by player.duration.collectAsState()
@@ -181,11 +183,27 @@ private fun AnswerCard(
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = answer.questionText,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = answer.questionText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Удалить",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
 
             if (answer.answerText.isNotBlank()) {
