@@ -33,4 +33,5 @@ interface AnswerDao {
         ORDER BY count DESC
     """)
     suspend fun countByCategory(): List<CategoryCount>
+
 }

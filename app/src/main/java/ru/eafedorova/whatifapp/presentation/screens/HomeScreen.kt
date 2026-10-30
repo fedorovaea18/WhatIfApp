@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import ru.eafedorova.whatifapp.R
 import ru.eafedorova.whatifapp.data.Question
@@ -61,6 +64,16 @@ fun HomeScreen(
     val repository = remember { QuestionRepository.create(context) }
     val scope = rememberCoroutineScope()
 
+    val viewModel: HomeViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return HomeViewModel(context) as T
+            }
+        }
+    )
+    val totalAnswers by viewModel.totalAnswers.collectAsState()
+
     var question by remember { mutableStateOf<Question?>(null) }
     var loading by remember { mutableStateOf(true) }
     var selectedCategories by remember { mutableStateOf(setOf("all")) }
@@ -69,6 +82,7 @@ fun HomeScreen(
         repository.ensureSeeded()
         question = repository.randomQuestion(selectedCategories)
         loading = false
+        viewModel.refreshProgress()
     }
 
     LaunchedEffect(selectedCategories) {
@@ -286,7 +300,7 @@ fun HomeScreen(
                     }
 
                     Text(
-                        "07 / 50+",
+                        text = String.format("%02d / 50", totalAnswers),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
