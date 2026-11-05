@@ -58,6 +58,14 @@ class StatsRepository(private val db: AppDatabase) {
 
     private fun todayStart(): Long = startOfDay(System.currentTimeMillis())
 
+    suspend fun totalQuestionsByCategory(): List<CategoryCount> = withContext(Dispatchers.IO) {
+        db.questionDao().countQuestionsByCategory()
+    }
+
+    suspend fun firstAnswerDate(): Long? = withContext(Dispatchers.IO) {
+        db.answerDao().getFirstAnswerDate()
+    }
+
     companion object {
         fun create(context: Context): StatsRepository {
             return StatsRepository(AppDatabase.getInstance(context))

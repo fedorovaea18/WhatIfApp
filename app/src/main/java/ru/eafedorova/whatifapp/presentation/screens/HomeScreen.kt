@@ -319,13 +319,6 @@ fun HomeScreen(
                     )
                 }
 
-                Spacer(Modifier.weight(1f))
-
-                Text(
-                    "С какой мысли начнётся твой день?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
 

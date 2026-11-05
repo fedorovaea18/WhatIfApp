@@ -34,4 +34,7 @@ interface AnswerDao {
     """)
     suspend fun countByCategory(): List<CategoryCount>
 
+    @Query("SELECT MIN(createdAt) FROM answers")
+    suspend fun getFirstAnswerDate(): Long?
+
 }

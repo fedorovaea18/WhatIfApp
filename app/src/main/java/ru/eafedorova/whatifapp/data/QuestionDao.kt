@@ -25,6 +25,9 @@ interface QuestionDao {
     @Query("SELECT COUNT(*) FROM questions WHERE category = 'general'")
     suspend fun countGeneral(): Int
 
+    @Query("SELECT category, COUNT(*) as count FROM questions GROUP BY category")
+    suspend fun countQuestionsByCategory(): List<CategoryCount>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(questions: List<Question>)
 
