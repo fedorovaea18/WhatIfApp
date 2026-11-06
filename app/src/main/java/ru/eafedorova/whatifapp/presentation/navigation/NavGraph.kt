@@ -65,11 +65,16 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 AnswerScreen(question = it, onBack = { navController.popBackStack() })
             }
         }
+
         composable(Screen.History.route) {
-            HistoryScreen(onBack = { navController.popBackStack() })
+            HistoryScreen(
+                onBack = { navController.popBackStack() },
+                onStatsClick = { navController.navigate(Screen.Stats.route) },
+                onGoToHome = { navController.popBackStack() }
+            )
         }
 
-        composable(Screen.Stats.route) {                  // ← добавить
+        composable(Screen.Stats.route) {
             StatsScreen(onBack = { navController.popBackStack() })
         }
     }

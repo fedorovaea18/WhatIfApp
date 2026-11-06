@@ -188,7 +188,8 @@ fun AnswerScreen(question: Question, onBack: () -> Unit) {
                                 questionId = question.id,
                                 questionText = question.text,
                                 answerText = text.trim(),
-                                voicePath = voiceFile?.absolutePath
+                                voicePath = voiceFile?.absolutePath,
+                                category = question.category
                             )
                         )
                         onBack()
