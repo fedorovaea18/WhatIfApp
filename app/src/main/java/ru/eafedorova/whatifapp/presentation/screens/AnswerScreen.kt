@@ -359,6 +359,12 @@ fun AnswerScreen(
                                 style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        } else if (voiceFile != null) {
+                            Text(
+                                text = "ЗАПИСЬ ЗАВЕРШЕНА",
+                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         } else {
                             Text(
                                 text = "ГОТОВ К ЗАПИСИ",
@@ -452,8 +458,8 @@ fun AnswerScreen(
                                         .height(56.dp),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                 ) {
                                     if (isPaused) {
@@ -482,7 +488,6 @@ fun AnswerScreen(
                                 Button(
                                     onClick = {
                                         stopRecording()
-                                        isPreparingToRecord = false
                                         isPaused = false
                                     },
                                     modifier = Modifier
@@ -568,7 +573,7 @@ fun AnswerScreen(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceContainer),
+                                    .background(MaterialTheme.colorScheme.secondaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -598,7 +603,11 @@ fun AnswerScreen(
 
             Spacer(Modifier.height(16.dp))
             Text(
-                text = if (text.isNotBlank() || voiceFile != null) "Ты пишешь и это уже многое значит" else "Здесь не бывает правильных ответов",
+                text = when {
+                    voiceFile != null -> "Иногда проще сказать, чем написать"
+                    text.isNotBlank() -> "Слово на экране — это застывшая мысль"
+                    else -> "Здесь не бывает правильных ответов"
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
