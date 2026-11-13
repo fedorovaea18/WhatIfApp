@@ -1,5 +1,6 @@
 package ru.eafedorova.whatifapp.presentation.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,13 +41,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import ru.eafedorova.whatifapp.R
 import ru.eafedorova.whatifapp.data.CategoryCount
 import ru.eafedorova.whatifapp.data.StatsRepository
 import ru.eafedorova.whatifapp.data.categories
+import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
+import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -75,29 +77,32 @@ fun StatsScreen(onBack: () -> Unit) {
         loading = false
     }
 
+    val currentPhrase = when {
+        total == 0 -> "Всё начинается с одного вопроса"
+        total < 5 -> "Каждая мысль делает этот путь твоим"
+        streak > 3 -> "Ты в хорошем ритме. Главное — не перегореть"
+        today == 0 -> "Сегодня — день тишины. Это тоже часть пути"
+        else -> "Пропустить день — тоже нормально"
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Статистика", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text("ЧТО ЕСЛИ?", style = MaterialTheme.typography.labelCapsSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(painter = painterResource(id = R.drawable.ic_back), contentDescription = "Назад")
                     }
                 },
-                actions = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_stats),
-                        contentDescription = "Статистика",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
         if (loading) {
             Box(
@@ -116,16 +121,15 @@ fun StatsScreen(onBack: () -> Unit) {
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 8.dp)
             ) {
-
                 Text(
-                    text = "Немного о твоём пути",
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 32.sp),
-                    color = MaterialTheme.colorScheme.onBackground
+                    text = "Твой путь",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Без целей и оценок. Просто твои мысли",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
@@ -134,7 +138,8 @@ fun StatsScreen(onBack: () -> Unit) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
@@ -143,34 +148,29 @@ fun StatsScreen(onBack: () -> Unit) {
                     ) {
                         Text(
                             text = String.format("%02d", total),
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 56.sp
-                            ),
+                            style = MaterialTheme.typography.displayLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(16.dp))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_document),
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(Modifier.width(6.dp))
-
                                 Text(
                                     text = "${getAnswersWord(total)} в дневнике",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onBackground
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 text = if (firstDate != null) "с ${formatFirstDate(firstDate!!)}" else "пока пусто",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -187,7 +187,8 @@ fun StatsScreen(onBack: () -> Unit) {
                     Card(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -195,28 +196,30 @@ fun StatsScreen(onBack: () -> Unit) {
                                     painter = painterResource(id = R.drawable.ic_flame),
                                     contentDescription = null,
                                     modifier = Modifier.size(26.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "$streak ${getDaysWord(streak)}",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 "подряд с собой",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
+
                     Card(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -224,19 +227,19 @@ fun StatsScreen(onBack: () -> Unit) {
                                     painter = painterResource(id = R.drawable.ic_calendar),
                                     contentDescription = null,
                                     modifier = Modifier.size(26.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "$today ${getAnswersWord(today)}",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 text = "сегодня, ${getTodayDateString()}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -248,7 +251,8 @@ fun StatsScreen(onBack: () -> Unit) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(
@@ -263,7 +267,7 @@ fun StatsScreen(onBack: () -> Unit) {
                             )
                             Text(
                                 text = "$total ${getAnswersWord(total)}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -294,27 +298,11 @@ fun StatsScreen(onBack: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Пропустить день — тоже нормально",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = currentPhrase,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_lock),
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = "Секретно. Только для тебя",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
-                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -357,13 +345,13 @@ private fun CategoryRow(item: CategoryCount, totalInCategory: Int) {
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
                 text = item.count.toString(),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -406,7 +394,6 @@ private fun getAnswersWord(count: Int): String {
         lastDigit in 2..4 -> "ответа"
         else -> "ответов"
     }
-
 }
 
 private fun getDaysWord(count: Int): String {
@@ -420,3 +407,12 @@ private fun getDaysWord(count: Int): String {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun StatsScreenPreview() {
+    WhatIfAppTheme {
+        StatsScreen(
+            onBack = {}
+        )
+    }
+}

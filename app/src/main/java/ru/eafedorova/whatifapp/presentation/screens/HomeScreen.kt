@@ -1,9 +1,12 @@
 package ru.eafedorova.whatifapp.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,9 +56,9 @@ import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.data.QuestionRepository
 import ru.eafedorova.whatifapp.data.categories
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
+import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 
 @Composable
-
 fun HomeScreen(
     onAnswerClick: (Question) -> Unit,
     onHistoryClick: () -> Unit,
@@ -94,12 +98,10 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 24.dp)
             .padding(top = 48.dp)
     ) {
-        //Spacer(Modifier.height(24.dp))
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,10 +109,8 @@ fun HomeScreen(
         ) {
             Text(
                 text = "ПЯТЬ МИНУТ С СОБОЙ",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    letterSpacing = 1.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                style = MaterialTheme.typography.labelCapsSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Surface(
@@ -119,7 +119,7 @@ fun HomeScreen(
                     .width(116.dp)
                     .height(44.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.surfaceContainer,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Row(
@@ -127,7 +127,6 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Icon(
                         painter = painterResource(id = R.drawable.ic_stats),
                         contentDescription = "Статистика",
@@ -137,36 +136,35 @@ fun HomeScreen(
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "Статистика",
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(26.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-
             Icon(
                 painter = painterResource(id = R.drawable.ic_logo),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onBackground
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(10.dp))
             Text(
                 text = "Что если?",
                 style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(9.dp))
         Text(
             text = "Не нужно знать ответ. Можно представить",
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -178,19 +176,19 @@ fun HomeScreen(
         ) {
             Text(
                 "О чём порассуждаем?",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (selectedCategories.size > 1 || !selectedCategories.contains("all")) {
                 Text(
                     "Выбрано: ${selectedCategories.size}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -203,16 +201,10 @@ fun HomeScreen(
                     onClick = {
                         selectedCategories = when {
                             key == "all" -> setOf("all")
-
                             isSelected -> {
                                 val newSet = selectedCategories - key
-                                if (newSet.isEmpty() || newSet == setOf("all")) {
-                                    setOf("all")
-                                } else {
-                                    newSet
-                                }
+                                if (newSet.isEmpty() || newSet == setOf("all")) setOf("all") else newSet
                             }
-
                             else -> {
                                 val base = selectedCategories - "all"
                                 base + key
@@ -221,10 +213,8 @@ fun HomeScreen(
                     },
                     shape = RoundedCornerShape(16.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
-                    border = if (isSelected) BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.primary
-                    ) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    else BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -239,7 +229,7 @@ fun HomeScreen(
                         Spacer(Modifier.width(8.dp))
                         Text(
                             label,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.labelMedium,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (isSelected) {
@@ -258,71 +248,83 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
                 ) {
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (question != null) {
-                            Icon(
-                                painter = painterResource(id = getCategoryIcon(question!!.category)),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (question != null) {
+                                Icon(
+                                    painter = painterResource(id = getCategoryIcon(question!!.category)),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Text(
+                                text = categories.find { it.first == question?.category }?.second
+                                    ?: question?.category ?: "",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(Modifier.width(6.dp))
                         }
 
                         Text(
-                            text = categories.find { it.first == question?.category }?.second
-                                ?: question?.category ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            text = String.format("%02d / 50", totalAnswers),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    Text(
-                        text = String.format("%02d / 50", totalAnswers),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(Modifier.weight(1f))
+
+                    if (loading || question == null) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    } else {
+                        Text(
+                            text = question!!.text,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Start
+                        )
+                    }
                 }
 
-                Spacer(Modifier.weight(1f))
-
-                if (loading || question == null) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else {
-                    Text(
-                        text = question!!.text,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Start
-                    )
+                if (question != null) {
+                    val illustrationRes = getCategoryIllustration(question!!.category)
+                    if (illustrationRes != 0) {
+                        Image(
+                            painter = painterResource(id = illustrationRes),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 60.dp, end = 16.dp)
+                                .size(130.dp)
+                        )
+                    }
                 }
-
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(26.dp))
 
         Button(
             onClick = {
@@ -347,10 +349,13 @@ fun HomeScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Другой вопрос", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "Другой вопрос",
+                style = MaterialTheme.typography.labelLarge
+            )
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
 
         Button(
             onClick = { question?.let { onAnswerClick(it) } },
@@ -359,8 +364,8 @@ fun HomeScreen(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurface
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
             enabled = question != null
         ) {
@@ -370,7 +375,11 @@ fun HomeScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Ответить", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "Ответить",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         }
 
         Spacer(Modifier.height(24.dp))
@@ -386,12 +395,10 @@ fun HomeScreen(
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-
                 Spacer(Modifier.width(8.dp))
-
                 Text(
-                    "Мои ответы",
-                    style = MaterialTheme.typography.labelLarge,
+                    "Твои мысли",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -413,7 +420,7 @@ fun HomeScreen(
             Spacer(Modifier.width(6.dp))
             Text(
                 text = "Секретно. Только для тебя",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -433,6 +440,19 @@ fun getCategoryIcon(key: String): Int {
         "relationships" -> R.drawable.ic_cat_relationships
         "dark" -> R.drawable.ic_cat_dark
         else -> R.drawable.ic_cat_all
+    }
+}
+
+fun getCategoryIllustration(key: String?): Int {
+    return when (key) {
+        "philosophy" -> R.drawable.ic_illus_philosophy
+        "incredible" -> R.drawable.ic_illus_incredible
+        "superpower" -> 0
+        "money" -> 0
+        "funny" -> 0
+        "relationships" -> R.drawable.ic_illus_relationships
+        "dark" -> R.drawable.ic_illus_dark
+        else -> 0
     }
 }
 

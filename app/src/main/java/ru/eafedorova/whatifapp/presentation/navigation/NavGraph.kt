@@ -61,8 +61,18 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 }
             }
 
-            question?.let {
-                AnswerScreen(question = it, onBack = { navController.popBackStack() })
+            question?.let { currentQuestion ->
+                AnswerScreen(
+                    question = currentQuestion,
+                    onBack = { navController.popBackStack() },
+                    onStatsClick = { navController.navigate(Screen.Stats.route) },
+
+                    onSaveSuccess = {
+                        navController.navigate(Screen.History.route) {
+                            popUpTo(Screen.Home.route) { inclusive = false }
+                        }
+                    }
+                )
             }
         }
 

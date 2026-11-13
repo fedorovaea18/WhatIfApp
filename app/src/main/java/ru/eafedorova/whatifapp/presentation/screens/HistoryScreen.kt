@@ -2,6 +2,7 @@ package ru.eafedorova.whatifapp.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +21,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -49,11 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -62,6 +61,9 @@ import ru.eafedorova.whatifapp.audio.VoicePlayer
 import ru.eafedorova.whatifapp.data.Answer
 import ru.eafedorova.whatifapp.data.AppDatabase
 import ru.eafedorova.whatifapp.data.categories
+import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
+import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
+import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -85,49 +87,89 @@ fun HistoryScreen(
     var answerToDelete by remember { mutableStateOf<Answer?>(null) }
     var playingId by remember { mutableStateOf<Long?>(null) }
 
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Что если?", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        "ЧТО ЕСЛИ?",
+                        style = MaterialTheme.typography.labelCapsSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         player.stop()
                         onBack()
                     }) {
-                        Icon(painter = painterResource(id = R.drawable.ic_back),
-                            contentDescription = "Назад")
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_back),
+                            contentDescription = "Назад"
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+
+                actions = {
+                    Surface(
+                        onClick = onStatsClick,
+                        modifier = Modifier
+                            .padding(end = 16.dp)
+                            .width(116.dp)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_stats),
+                                contentDescription = "Статистика",
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Статистика",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_book),
+                        painter = painterResource(id = R.drawable.ic_big_book),
                         contentDescription = null,
                         modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        text = "Мои ответы",
-                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 32.sp),
-                        color = MaterialTheme.colorScheme.onBackground
+                        text = "Твои мысли",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "Мысли, к которым можно вернуться",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -140,24 +182,11 @@ fun HistoryScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Последние записи · ${answers.size} из 24",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Последние записи · ${answers.size} из ${answers.size}",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onStatsClick) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_stats),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Статистика",
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+
             }
 
             if (answers.isEmpty()) {
@@ -172,11 +201,10 @@ fun HistoryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
                             Column(
@@ -193,14 +221,14 @@ fun HistoryScreen(
 
                                 Text(
                                     text = "Пока нет ответов",
-                                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 28.sp),
+                                    style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(Modifier.height(8.dp))
 
                                 Text(
                                     text = "Первая мысль может быть совсем короткой. Дай ей место здесь",
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
                                 )
@@ -223,7 +251,10 @@ fun HistoryScreen(
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Первый ответ", style = MaterialTheme.typography.labelLarge)
+                                    Text(
+                                        "Первый ответ",
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
                                 }
                             }
                         }
@@ -232,6 +263,7 @@ fun HistoryScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
+                    state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -262,23 +294,10 @@ fun HistoryScreen(
                     .padding(bottom = 24.dp, top = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Ещё 21 запись ниже",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_lock),
-                        contentDescription = null,
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(4.dp))
+                if (listState.canScrollForward && answers.isNotEmpty()) {
                     Text(
-                        text = "Секретно. Только для тебя",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                        text = "Твои прошлые мысли ниже",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -293,15 +312,15 @@ fun HistoryScreen(
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
-                    text = "Стереть эту мысль?",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
+                    text = "Удалить эту мысль?",
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "Она исчезнет с устройства навсегда. Но у тебя появится место для новых мыслей",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "Она исчезнет с устройства навсегда.\nНо у тебя появится место для новых мыслей",
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -313,12 +332,23 @@ fun HistoryScreen(
                     OutlinedButton(
                         onClick = { answerToDelete = null },
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Оставить",
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
+
+
 
                     Button(
                         onClick = {
@@ -331,12 +361,15 @@ fun HistoryScreen(
                         },
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE8A3A3),
-                            contentColor = Color(0xFF1C1E1E)
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Стереть", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Удалить",
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
             },
@@ -360,14 +393,15 @@ private fun AnswerCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
 
             Text(
                 text = answer.questionText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(8.dp))
@@ -375,12 +409,11 @@ private fun AnswerCard(
             if (answer.answerText.isNotBlank()) {
                 Text(
                     text = answer.answerText,
-                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(16.dp))
             }
-
 
             if (!answer.voicePath.isNullOrBlank()) {
                 Row(
@@ -412,12 +445,12 @@ private fun AnswerCard(
                         ) {
                             Text(
                                 formatTime(if (isPlaying) position else 0),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 formatTime(duration),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -427,7 +460,7 @@ private fun AnswerCard(
                                 .fillMaxWidth()
                                 .height(4.dp)
                                 .clip(RoundedCornerShape(2.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                         ) {
                             Box(
                                 modifier = Modifier
@@ -450,7 +483,7 @@ private fun AnswerCard(
                 Column {
                     Text(
                         text = formatDateWithToday(answer.createdAt),
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(4.dp))
@@ -473,13 +506,13 @@ private fun AnswerCard(
                             painter = painterResource(id = iconRes),
                             contentDescription = null,
                             modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = categoryLabel,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -488,7 +521,7 @@ private fun AnswerCard(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_trash),
                         contentDescription = "Удалить",
-                        tint = MaterialTheme.colorScheme.error,
+                        tint = MaterialTheme.customColors.attention,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -515,7 +548,7 @@ private fun formatDateWithToday(timestamp: Long): String {
         isToday -> "Сегодня, $timeString"
         isYesterday -> "Вчера, $timeString"
         else -> {
-            val dateFormatter = SimpleDateFormat("d MMM, HH:mm", Locale("ru"))
+            val dateFormatter = SimpleDateFormat("d MMMM, HH:mm", Locale("ru"))
             dateFormatter.format(Date(timestamp))
         }
     }
@@ -527,4 +560,16 @@ private fun formatTime(ms: Int): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HistoryScreenPreview() {
+    WhatIfAppTheme {
+        HistoryScreen(
+            onBack = {},
+            onStatsClick = {},
+            onGoToHome = {}
+        )
+    }
 }

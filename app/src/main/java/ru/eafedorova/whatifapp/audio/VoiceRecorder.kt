@@ -1,61 +1,84 @@
-package ru.eafedorova.whatifapp.audio
-
 import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
+import androidx.annotation.RequiresApi
 import java.io.File
 
 class VoiceRecorder(private val context: Context) {
 
-    private var recorder: MediaRecorder? = null
+    private var mediaRecorder: MediaRecorder? = null
     private var currentFile: File? = null
 
-    fun start(): File {
-        val dir = File(context.filesDir, "voices").apply { mkdirs() }
-        val file = File(dir, "voice_${System.currentTimeMillis()}.m4a")
-        currentFile = file
+    fun start(): File? {
+        try {
 
-        recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(context)
-        } else {
-            @Suppress("DEPRECATION")
-            MediaRecorder()
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioEncodingBitRate(128_000)
-            setAudioSamplingRate(44_100)
-            setOutputFile(file.absolutePath)
-            prepare()
-            start()
+            currentFile = File(context.cacheDir, "record_${System.currentTimeMillis()}.m4a")
+
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
+
+            mediaRecorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder?.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            mediaRecorder?.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+            mediaRecorder?.setOutputFile(currentFile?.absolutePath)
+
+            mediaRecorder?.prepare()
+            mediaRecorder?.start()
+
+            return currentFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
         }
-
-        return file
     }
 
     fun stop(): File? {
-        return try {
-            recorder?.stop()
-            recorder?.release()
-            recorder = null
-            currentFile
+        try {
+            mediaRecorder?.stop()
+            mediaRecorder?.release()
         } catch (e: Exception) {
-            recorder?.release()
-            recorder = null
+            e.printStackTrace()
             currentFile?.delete()
-            null
+            currentFile = null
+        } finally {
+            mediaRecorder = null
         }
+        return currentFile
     }
 
     fun cancel() {
         try {
-            recorder?.stop()
-        } catch (_: Exception) {
+            mediaRecorder?.stop()
+            mediaRecorder?.release()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            mediaRecorder = null
+            currentFile?.delete()
+            currentFile = null
         }
-        recorder?.release()
-        recorder = null
-        currentFile?.delete()
-        currentFile = null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun pause() {
+        try {
+            mediaRecorder?.pause()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun resume() {
+        try {
+            mediaRecorder?.resume()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
