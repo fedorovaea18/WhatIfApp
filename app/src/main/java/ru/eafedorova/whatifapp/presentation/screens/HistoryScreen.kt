@@ -193,7 +193,6 @@ fun HistoryScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
                         .padding(horizontal = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -294,9 +293,15 @@ fun HistoryScreen(
                     .padding(bottom = 24.dp, top = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (listState.canScrollForward && answers.isNotEmpty()) {
+                if (answers.isNotEmpty()) {
+                    val message = if (listState.canScrollForward) {
+                        "Ниже — твои прошлые размышления"
+                    } else {
+                        "Твои мысли бережно хранятся здесь"
+                    }
+
                     Text(
-                        text = "Твои прошлые мысли ниже",
+                        text = message,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
