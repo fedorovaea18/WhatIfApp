@@ -155,18 +155,7 @@ fun AnswerScreen(
 
     LaunchedEffect(isRecording, isPaused) {
         if (isRecording && !isPaused) {
-
-            if (recordingTime == 0) {
-
-            }
-
-            val baseWave = List(24) { index ->
-                val center = 12f
-                val distanceFromCenter = kotlin.math.abs(index - center)
-                val height = 1f - (distanceFromCenter / 14f)
-                height.coerceIn(0.1f, 1f)
-            }
-
+            // ЛОГИКА ЗАПИСИ (волна реагирует на голос)
             launch {
                 while (isRecording && !isPaused) {
                     kotlinx.coroutines.delay(1000)
@@ -176,15 +165,52 @@ fun AnswerScreen(
 
             launch {
                 while (isRecording && !isPaused) {
-                    kotlinx.coroutines.delay(150)
+                    kotlinx.coroutines.delay(100)
                     if (isRecording && !isPaused) {
-                        amplitude = baseWave.map { baseHeight ->
-                            val randomFactor = kotlin.random.Random.nextFloat() * 0.4f + 0.8f
-                            (baseHeight * randomFactor).coerceIn(0.1f, 1f)
+                        val rawAmplitude = recorder.getAmplitude().toFloat()
+                        val normalized = (rawAmplitude / 32767f * 1.5f).coerceIn(0.05f, 1f)
+
+                        val baseWave = List(24) { index ->
+                            val center = 11.5f
+                            val distanceFromCenter = kotlin.math.abs(index - center)
+                            val arcFactor = (1f - (distanceFromCenter / 14f)).coerceIn(0.1f, 1f)
+                            (arcFactor * normalized).coerceIn(0.05f, 1f)
+                        }
+
+                        amplitude = amplitude.zip(baseWave) { old, new ->
+                            old * 0.3f + new * 0.7f
                         }
                     }
                 }
             }
+        } else if (isRecording && isPaused) {
+
+            launch {
+                kotlinx.coroutines.delay(50)
+                if (isRecording && isPaused) {
+                    val targetAmplitude = List(24) { 0.05f }
+                    repeat(10) {
+                        amplitude = amplitude.zip(targetAmplitude) { old, target ->
+                            old + (target - old) * 0.2f
+                        }
+                        kotlinx.coroutines.delay(30)
+                    }
+                }
+            }
+        } else {
+
+
+            /*
+            launch {
+                val targetAmplitude = List(24) { 0.05f }
+                repeat(10) {
+                    amplitude = amplitude.zip(targetAmplitude) { old, target ->
+                        old + (target - old) * 0.2f
+                    }
+                    kotlinx.coroutines.delay(30)
+                }
+            }
+            */
         }
     }
 
@@ -264,11 +290,27 @@ fun AnswerScreen(
                 .padding(padding)
                 .padding(horizontal = 24.dp)
         ) {
-            Text(
-                text = "Твоя мысль",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_answer),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = "Твоя мысль",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Запиши или скажи",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -398,15 +440,15 @@ fun AnswerScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(64.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             amplitude.forEach { amp ->
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
+                                        .width(4.dp)
                                         .fillMaxHeight(if (isRecording && !isPaused) amp else 0.1f)
-                                        .clip(CircleShape)
+                                        .clip(RoundedCornerShape(3.dp))
                                         .background(
                                             MaterialTheme.colorScheme.primary.copy(
                                                 alpha = if (isRecording && !isPaused) 1f else 0.3f
@@ -704,20 +746,26 @@ fun AnswerScreen(
     }
 
     if (showClearDialog) {
+        val isClearingVoice = isPreparingToRecord || isRecording || voiceFile != null
+
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
-                    text = "Очистить всё?",
+                    text = if (isClearingVoice) "Убрать голос?" else "Убрать текст?",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "Твой текст и голосовая запись будут удалены. Это действие нельзя отменить.",
+                    text = if (isClearingVoice) {
+                        "Здесь останется только текст (если он есть). Голосовая мысль пропадёт"
+                    } else {
+                        "Здесь останется только голос (если он есть). Текст пропадёт"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -734,21 +782,25 @@ fun AnswerScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Отмена", style = MaterialTheme.typography.labelLarge)
+                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
                     }
 
                     Button(
                         onClick = {
-                            if (isRecording) {
-                                recorder.cancel()
-                                isRecording = false
+                            if (isClearingVoice) {
+                                if (isRecording) {
+                                    recorder.cancel()
+                                    isRecording = false
+                                }
+                                isPreparingToRecord = false
+                                isPaused = false
+                                player.stop()
+                                isPlaying = false
+                                voiceFile?.delete()
+                                voiceFile = null
+                            } else {
+                                text = ""
                             }
-                            isPreparingToRecord = false
-                            player.stop()
-                            isPlaying = false
-                            voiceFile?.delete()
-                            voiceFile = null
-                            text = ""
                             showClearDialog = false
                         },
                         shape = RoundedCornerShape(16.dp),
@@ -758,11 +810,15 @@ fun AnswerScreen(
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Очистить", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            text = "Убрать",
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
             },
             dismissButton = {}
         )
     }
+
 }

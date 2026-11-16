@@ -312,7 +312,7 @@ fun HistoryScreen(
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
-                    text = "Удалить эту мысль?",
+                    text = "Убрать эту мысль?",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -367,7 +367,7 @@ fun HistoryScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            "Удалить",
+                            "Убрать",
                             style = MaterialTheme.typography.labelLarge
                         )
                     }

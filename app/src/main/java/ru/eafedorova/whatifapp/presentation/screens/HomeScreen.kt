@@ -447,9 +447,9 @@ fun getCategoryIllustration(key: String?): Int {
     return when (key) {
         "philosophy" -> R.drawable.ic_illus_philosophy
         "incredible" -> R.drawable.ic_illus_incredible
-        "superpower" -> 0
-        "money" -> 0
-        "funny" -> 0
+        "superpower" -> R.drawable.ic_illus_superpower
+        "money" -> R.drawable.ic_illus_money
+        "funny" -> R.drawable.ic_illus_funny
         "relationships" -> R.drawable.ic_illus_relationships
         "dark" -> R.drawable.ic_illus_dark
         else -> 0

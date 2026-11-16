@@ -64,6 +64,14 @@ class VoiceRecorder(private val context: Context) {
         }
     }
 
+    fun getAmplitude(): Int {
+        return try {
+            mediaRecorder?.maxAmplitude ?: 0
+        } catch (e: Exception) {
+            0
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.R)
     fun pause() {
         try {
