@@ -2,7 +2,6 @@ package ru.eafedorova.whatifapp.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,10 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -110,7 +111,6 @@ fun HistoryScreen(
                         )
                     }
                 },
-
                 actions = {
                     Surface(
                         onClick = onStatsClick,
@@ -186,7 +186,6 @@ fun HistoryScreen(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
             }
 
             if (answers.isEmpty()) {
@@ -267,22 +266,55 @@ fun HistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(answers, key = { it.id }) { answer ->
-                        AnswerCard(
-                            answer = answer,
-                            isPlaying = playingId == answer.id,
-                            player = player,
-                            onPlayPause = {
-                                val path = answer.voicePath ?: return@AnswerCard
-                                if (playingId == answer.id) {
-                                    if (player.isPlaying.value) player.pause() else player.resume()
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.EndToStart) {
+                                    answerToDelete = answer
+                                    false
                                 } else {
-                                    player.stop()
-                                    playingId = answer.id
-                                    player.play(path) { playingId = null }
+                                    false
                                 }
-                            },
-                            onDeleteClick = { answerToDelete = answer }
+                            }
                         )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(MaterialTheme.customColors.attention)
+                                        .padding(horizontal = 24.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_trash),
+                                        contentDescription = "Удалить",
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        ) {
+                            AnswerCard(
+                                answer = answer,
+                                isPlaying = playingId == answer.id,
+                                player = player,
+                                onPlayPause = {
+                                    val path = answer.voicePath ?: return@AnswerCard
+                                    if (playingId == answer.id) {
+                                        if (player.isPlaying.value) player.pause() else player.resume()
+                                    } else {
+                                        player.stop()
+                                        playingId = answer.id
+                                        player.play(path) { playingId = null }
+                                    }
+                                },
+                                onDeleteClick = { answerToDelete = answer }
+                            )
+                        }
                     }
                 }
             }
@@ -294,12 +326,8 @@ fun HistoryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (answers.isNotEmpty()) {
-                    val message = if (listState.canScrollForward) {
-                        "Ниже — твои прошлые размышления"
-                    } else {
-                        "Твои мысли бережно хранятся здесь"
-                    }
-
+                    val message =
+                        if (listState.canScrollForward) "Ниже — твои прошлые размышления" else "Твои мысли бережно хранятся здесь"
                     Text(
                         text = message,
                         style = MaterialTheme.typography.labelMedium,
