@@ -326,88 +326,106 @@ fun HistoryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (answers.isNotEmpty()) {
+                    val isScrollable = listState.canScrollForward
                     val message =
-                        if (listState.canScrollForward) "Ниже — твои прошлые размышления" else "Твои мысли бережно хранятся здесь"
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        if (isScrollable) "Ниже — твои прошлые размышления" else "Твои мысли бережно хранятся здесь"
+                    val iconRes =
+                        if (isScrollable) R.drawable.ic_arrow_down else R.drawable.ic_heart
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-        }
-    }
 
-    answerToDelete?.let { answer ->
-        AlertDialog(
-            onDismissRequest = { answerToDelete = null },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(24.dp),
-            title = {
-                Text(
-                    text = "Убрать эту мысль?",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            text = {
-                Text(
-                    text = "Она исчезнет с устройства навсегда.\nНо у тебя появится место для новых мыслей",
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { answerToDelete = null },
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(
-                            width = 1.dp,
+            answerToDelete?.let { answer ->
+                AlertDialog(
+                    onDismissRequest = { answerToDelete = null },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(24.dp),
+                    title = {
+                        Text(
+                            text = "Убрать эту мысль?",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = "Она исчезнет с устройства навсегда.\nНо у тебя появится место для новых мыслей",
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            "Оставить",
-                            style = MaterialTheme.typography.labelLarge
                         )
-                    }
+                    },
+                    confirmButton = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { answerToDelete = null },
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
 
-
-
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                if (playingId == answer.id) { player.stop(); playingId = null }
-                                answer.voicePath?.let { path -> runCatching { File(path).delete() } }
-                                db.answerDao().deleteById(answer.id)
-                                answerToDelete = null
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    "Оставить",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
                             }
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            "Убрать",
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
-            },
-            dismissButton = {}
-        )
+
+
+
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        if (playingId == answer.id) {
+                                            player.stop(); playingId = null
+                                        }
+                                        answer.voicePath?.let { path -> runCatching { File(path).delete() } }
+                                        db.answerDao().deleteById(answer.id)
+                                        answerToDelete = null
+                                    }
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    "Убрать",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
+                    },
+                    dismissButton = {}
+                )
+            }
+        }
     }
 }
 
