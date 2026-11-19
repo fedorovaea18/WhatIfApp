@@ -5,26 +5,34 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import ru.eafedorova.whatifapp.R
 import ru.eafedorova.whatifapp.data.AppDatabase
-import kotlinx.coroutines.runBlocking
+import java.util.Calendar
 
 class DailyQuestionWorker(
     context: Context,
     params: WorkerParameters
-) : Worker(context, params) {
+) : CoroutineWorker(context, params) {
 
-    override fun doWork(): Result {
-        val context = applicationContext
-        val db = AppDatabase.getInstance(context)
+    override suspend fun doWork(): Result {
+        val frequency = inputData.getString("frequency") ?: "daily"
 
-        val question = runBlocking {
-            db.questionDao().getRandom()
-        } ?: return Result.success()
+        if (frequency == "weekdays") {
+            val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+            if (today == Calendar.SATURDAY || today == Calendar.SUNDAY) {
+                return Result.success()
+            }
+        }
 
-        showNotification(context, question.text)
+        val db = AppDatabase.getInstance(applicationContext)
+        val question = db.questionDao().getRandom()
+
+        val questionText = question?.text ?: "Что если...?"
+
+        showNotification(applicationContext, questionText)
+
         return Result.success()
     }
 
@@ -52,6 +60,17 @@ class DailyQuestionWorker(
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(1, notification)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationManager.notify(1, notification)
+            }
+        } else {
+            notificationManager.notify(1, notification)
+        }
     }
 }

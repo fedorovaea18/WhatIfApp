@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,11 +43,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -57,11 +55,13 @@ import ru.eafedorova.whatifapp.data.QuestionRepository
 import ru.eafedorova.whatifapp.data.categories
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun HomeScreen(
     onAnswerClick: (Question) -> Unit,
     onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onStatsClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -82,17 +82,12 @@ fun HomeScreen(
     var loading by remember { mutableStateOf(true) }
     var selectedCategories by remember { mutableStateOf(setOf("all")) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedCategories) {
+        loading = true
         repository.ensureSeeded()
         question = repository.randomQuestion(selectedCategories)
         loading = false
         viewModel.refreshProgress()
-    }
-
-    LaunchedEffect(selectedCategories) {
-        loading = true
-        question = repository.randomQuestion(selectedCategories)
-        loading = false
     }
 
     Column(
@@ -113,32 +108,45 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Surface(
-                onClick = onStatsClick,
-                modifier = Modifier
-                    .width(116.dp)
-                    .height(44.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                IconButton(onClick = onSettingsClick) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_stats),
-                        contentDescription = "Статистика",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        painter = painterResource(id = R.drawable.ic_document),
+                        contentDescription = "Настройки",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Статистика",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                }
+
+                Surface(
+                    onClick = onStatsClick,
+                    modifier = Modifier
+                        .width(116.dp)
+                        .height(44.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_stats),
+                            contentDescription = "Статистика",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Статистика",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
@@ -398,7 +406,7 @@ fun HomeScreen(
                 Spacer(Modifier.width(8.dp))
                 Text(
                     "Твои мысли",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -424,8 +432,6 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
-        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -463,7 +469,8 @@ fun HomeScreenPreview() {
         HomeScreen(
             onAnswerClick = {},
             onHistoryClick = {},
-            onStatsClick = {}
+            onStatsClick = {},
+            onSettingsClick = {}
         )
     }
 }

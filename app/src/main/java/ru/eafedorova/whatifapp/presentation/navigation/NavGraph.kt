@@ -16,6 +16,7 @@ import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.presentation.screens.AnswerScreen
 import ru.eafedorova.whatifapp.presentation.screens.HistoryScreen
 import ru.eafedorova.whatifapp.presentation.screens.HomeScreen
+import ru.eafedorova.whatifapp.presentation.screens.SettingsScreen
 import ru.eafedorova.whatifapp.presentation.screens.StatsScreen
 
 sealed class Screen(val route: String) {
@@ -26,6 +27,7 @@ sealed class Screen(val route: String) {
 
     object History : Screen("history")
     object Stats : Screen("stats")
+    object Settings : Screen("settings")
 }
 
 @Composable
@@ -47,6 +49,9 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 },
                 onStatsClick = {
                     navController.navigate(Screen.Stats.route)
+                },
+                onSettingsClick = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
@@ -86,6 +91,10 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Stats.route) {
             StatsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
     }
 }
