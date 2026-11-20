@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.eafedorova.whatifapp.R
 import ru.eafedorova.whatifapp.data.CategoryCount
 import ru.eafedorova.whatifapp.data.StatsRepository
@@ -207,7 +208,7 @@ fun StatsScreen(onBack: () -> Unit) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "$streak ${getDaysWord(streak)}",
-                                    style = MaterialTheme.typography.headlineMedium,
+                                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 22.sp),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
@@ -238,7 +239,7 @@ fun StatsScreen(onBack: () -> Unit) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "$today ${getAnswersWord(today)}",
-                                    style = MaterialTheme.typography.headlineMedium,
+                                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 22.sp),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
@@ -282,8 +283,8 @@ fun StatsScreen(onBack: () -> Unit) {
 
                         if (byCategory.isEmpty()) {
                             Text(
-                                "Пока нет данных",
-                                style = MaterialTheme.typography.bodyLarge,
+                                "Пока нет записей",
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         } else {

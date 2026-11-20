@@ -43,23 +43,42 @@ class DailyQuestionWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Вопрос дня",
+                "Минута для себя",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Ежедневный вопрос для размышления"
+                description = "Тихое напоминание о новом вопросе"
             }
             notificationManager.createNotificationChannel(channel)
         }
 
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+
+
         val notification = NotificationCompat.Builder(context, channelId)
+
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Вопрос дня")
-            .setContentText(questionText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(questionText))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_logo))
+
+            .setContentTitle("Пять минут с собой")
+            .setContentText("Новый вопрос ждёт тебя. Что если бы ты...")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Новый вопрос ждёт тебя. Что если бы ты..."))
+
+
+            .setColor(android.graphics.Color.parseColor("#805A32"))
+
+
+            .setContentIntent(pendingIntent)
+            .addAction(R.drawable.ic_pen, "Открыть", pendingIntent)
             .setAutoCancel(true)
             .build()
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (androidx.core.content.ContextCompat.checkSelfPermission(

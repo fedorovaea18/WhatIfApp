@@ -6,9 +6,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -35,13 +39,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -68,6 +73,14 @@ import ru.eafedorova.whatifapp.notifications.NotificationScheduler
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 import java.io.File
+
+import androidx.compose.foundation.background
+
+import androidx.compose.foundation.layout.offset
+
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -224,11 +237,12 @@ fun SettingsScreen(onBack: () -> Unit) {
                     SettingsSection(title = "Прикосновения") {
                         SettingsSwitchRow(
                             title = "Виброотклик",
+                            subtitle = "Лёгкая вибрация при нажатии",
                             checked = vibrationEnabled,
                             onCheckedChange = {
                                 vibrationEnabled = it
                                 scope.launch { themePrefs.setVibrationEnabled(it) }
-                            }
+                            },
                         )
                     }
                 }
@@ -238,7 +252,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                     SettingsSection(title = "Ритм") {
                         SettingsSwitchRow(
-                            title = "Вопрос дня",
+                            title = "Минута для себя",
+                            subtitle = "Тихое напоминание о новом вопросе",
                             checked = notificationsEnabled,
                             onCheckedChange = { isEnabled ->
                                 notificationsEnabled = isEnabled
@@ -331,7 +346,11 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
-                                    text = "$textAnswersCount ${pluralizeAnswers(textAnswersCount)}",
+                                    text = if (textAnswersCount > 0) {
+                                        "$textAnswersCount ${pluralizeAnswers(textAnswersCount)}"
+                                    } else {
+                                        "Пока нет записей"
+                                    },
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -631,7 +650,6 @@ fun SettingsScreen(onBack: () -> Unit) {
     }
 }
 
-// --- Вспомогательные функции (без изменений) ---
 
 private fun pluralizeAnswers(count: Int): String {
     val mod10 = count % 10
@@ -705,19 +723,32 @@ private fun SettingsSection(
 private fun SettingsSwitchRow(
     title: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    subtitle: String? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        CompactSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
         )
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -740,9 +771,10 @@ private fun SettingsValueRow(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary
         )
     }
@@ -763,13 +795,68 @@ private fun ThemeButton(
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surface,
+            else MaterialTheme.colorScheme.secondaryContainer,
             contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSecondaryContainer
         ),
-        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null,
+        border =  null,
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelMedium)
+        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+
+@Composable
+fun CompactSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    val trackWidth = 44.dp
+    val trackHeight = 26.dp
+    val thumbSize = 20.dp
+    val padding = 3.dp
+
+
+    val trackColor = Color(0xFFE8C58F)
+    val offThumbColor = Color(0xFF5C4B35)
+    val onThumbColor = Color(0xFF302419)
+
+
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) trackWidth - thumbSize - padding else padding,
+        animationSpec = tween(durationMillis = 200),
+        label = "thumbOffset"
+    )
+
+    val currentThumbColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (checked) onThumbColor else offThumbColor,
+        animationSpec = tween(durationMillis = 200),
+        label = "thumbColor"
+    )
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Box(
+        modifier = modifier
+            .size(width = trackWidth, height = trackHeight)
+            .clip(CircleShape)
+            .background(trackColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(bounded = false, radius = trackHeight / 2),
+                onClick = { onCheckedChange(!checked) }
+            ),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset - padding)
+                .size(thumbSize)
+                .clip(CircleShape)
+                .background(currentThumbColor)
+        )
     }
 }
