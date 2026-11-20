@@ -655,16 +655,33 @@ fun AnswerScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-            Text(
-                text = when {
-                    voiceFile != null -> "Иногда проще сказать, чем написать"
-                    text.isNotBlank() -> "Слово на экране — это застывшая мысль"
-                    else -> "Здесь не бывает правильных ответов"
-                },
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                val (iconRes, phrase) = when {
+                    voiceFile != null -> R.drawable.ic_hint_voice to "Иногда проще сказать, чем написать"
+                    text.isNotBlank() -> R.drawable.ic_hint_crystal to "Слово на экране — это застывшая мысль"
+                    else -> R.drawable.ic_hint_free_circle to "Здесь не бывает правильных ответов"
+                }
+
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.width(6.dp))
+
+                Text(
+                    text = phrase,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
 

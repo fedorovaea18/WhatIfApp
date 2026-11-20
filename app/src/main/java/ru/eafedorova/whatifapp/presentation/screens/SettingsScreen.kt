@@ -108,7 +108,6 @@ fun SettingsScreen(onBack: () -> Unit) {
     var reminderHour by remember { mutableIntStateOf(19) }
     var reminderMinute by remember { mutableIntStateOf(0) }
 
-    // Состояния для диалогов
     var showFrequencyDialog by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteTextDialog by remember { mutableStateOf(false) }
@@ -167,12 +166,12 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_calendar),
+                            painter = painterResource(id = R.drawable.ic_settings),
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(8.dp))
                         Text(
                             text = "Настройки",
                             style = MaterialTheme.typography.headlineLarge,
@@ -239,7 +238,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                     SettingsSection(title = "Ритм") {
                         SettingsSwitchRow(
-                            title = "Напоминать о вопросах",
+                            title = "Вопрос дня",
                             checked = notificationsEnabled,
                             onCheckedChange = { isEnabled ->
                                 notificationsEnabled = isEnabled
@@ -265,13 +264,13 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Spacer(Modifier.height(12.dp))
 
                             SettingsValueRow(
-                                label = "Частота",
+                                label = "Как часто",
                                 value = getFrequencyLabel(reminderFrequency) + " ▾",
                                 onClick = { showFrequencyDialog = true }
                             )
 
                             SettingsValueRow(
-                                label = "Время",
+                                label = "Во сколько",
                                 value = formatTime(reminderHour, reminderMinute),
                                 onClick = { showTimePicker = true }
                             )
@@ -416,12 +415,11 @@ fun SettingsScreen(onBack: () -> Unit) {
         }
     }
 
-    // --- Диалоги ---
 
     if (showFrequencyDialog) {
         AlertDialog(
             onDismissRequest = { showFrequencyDialog = false },
-            title = { Text("Как часто напоминать?") },
+            title = { Text("Выбери свой ритм") },
             text = {
                 Column {
                     listOf(
@@ -472,7 +470,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Выберите время") },
+            title = { Text("Выбери удобное время") },
             text = {
                 TimePicker(state = timePickerState)
             },

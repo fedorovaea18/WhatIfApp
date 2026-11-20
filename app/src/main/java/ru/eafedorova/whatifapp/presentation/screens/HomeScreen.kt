@@ -122,9 +122,10 @@ fun HomeScreen(
             ) {
                 IconButton(onClick = onSettingsClick) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_document),
+                        painter = painterResource(id = R.drawable.ic_settings),
                         contentDescription = "Настройки",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
