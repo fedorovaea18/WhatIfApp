@@ -71,6 +71,7 @@ import ru.eafedorova.whatifapp.audio.VoicePlayer
 import ru.eafedorova.whatifapp.data.Answer
 import ru.eafedorova.whatifapp.data.Question
 import ru.eafedorova.whatifapp.data.QuestionRepository
+import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.data.categories
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
@@ -88,12 +89,14 @@ fun AnswerScreen(
     val context = LocalContext.current
     val repository = remember { QuestionRepository.create(context) }
     val scope = rememberCoroutineScope()
+
     val haptic = LocalHapticFeedback.current
+    val themePrefs = remember { ThemePreferences(context) }
+    var vibrationEnabled by remember { mutableStateOf(true) }
 
     var isSaving by remember { mutableStateOf(false) }
     var isPreparingToRecord by remember { mutableStateOf(false) }
     var isPaused by remember { mutableStateOf(false) }
-
 
     val recorder = remember { VoiceRecorder(context) }
     val player = remember { VoicePlayer() }
@@ -110,6 +113,10 @@ fun AnswerScreen(
     var recordingTime by remember { mutableIntStateOf(0) }
     var amplitude by remember { mutableStateOf(List(20) { 0f }) }
 
+    LaunchedEffect(Unit) {
+        vibrationEnabled = themePrefs.getVibrationEnabled()
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -118,7 +125,7 @@ fun AnswerScreen(
             isRecording = true
         } else {
             isPreparingToRecord = false
-            Toast.makeText(context, "Нужно разрешение на микрофон", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Необходимо разрешение на микрофон", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -155,7 +162,6 @@ fun AnswerScreen(
 
     LaunchedEffect(isRecording, isPaused) {
         if (isRecording && !isPaused) {
-            // ЛОГИКА ЗАПИСИ (волна реагирует на голос)
             launch {
                 while (isRecording && !isPaused) {
                     kotlinx.coroutines.delay(1000)
@@ -462,7 +468,12 @@ fun AnswerScreen(
 
                         if (!isRecording && !isPaused) {
                             Button(
-                                onClick = { startRecording() },
+                                onClick = {
+                                    if (vibrationEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    }
+                                    startRecording()
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp),
@@ -689,6 +700,9 @@ fun AnswerScreen(
 
                 Button(
                     onClick = {
+                        if (vibrationEnabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
                         scope.launch {
                             isSaving = true
                             repository.saveAnswer(

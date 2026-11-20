@@ -41,6 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +51,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +64,7 @@ import ru.eafedorova.whatifapp.R
 import ru.eafedorova.whatifapp.audio.VoicePlayer
 import ru.eafedorova.whatifapp.data.Answer
 import ru.eafedorova.whatifapp.data.AppDatabase
+import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.data.categories
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
@@ -83,12 +87,19 @@ fun HistoryScreen(
     val scope = rememberCoroutineScope()
     val player = remember { VoicePlayer() }
 
+    val themePrefs = remember { ThemePreferences(context) }
+    var vibrationEnabled by remember { mutableStateOf(true) }
+
     val answers by db.answerDao().getAll().collectAsState(initial = emptyList())
 
     var answerToDelete by remember { mutableStateOf<Answer?>(null) }
     var playingId by remember { mutableStateOf<Long?>(null) }
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(Unit) {
+        vibrationEnabled = themePrefs.getVibrationEnabled()
+    }
 
     Scaffold(
         topBar = {
@@ -302,6 +313,7 @@ fun HistoryScreen(
                                 answer = answer,
                                 isPlaying = playingId == answer.id,
                                 player = player,
+                                vibrationEnabled = vibrationEnabled,
                                 onPlayPause = {
                                     val path = answer.voicePath ?: return@AnswerCard
                                     if (playingId == answer.id) {
@@ -435,11 +447,13 @@ private fun AnswerCard(
     isPlaying: Boolean,
     player: VoicePlayer,
     onPlayPause: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    vibrationEnabled: Boolean
 ) {
     val position by player.position.collectAsState()
     val duration by player.duration.collectAsState()
     val isPlayerPlaying by player.isPlaying.collectAsState()
+    val haptic = LocalHapticFeedback.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -479,6 +493,9 @@ private fun AnswerCard(
                         contentAlignment = Alignment.Center
                     ) {
                         IconButton(onClick = onPlayPause, modifier = Modifier.fillMaxSize()) {
+                            if (vibrationEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
                             Icon(
                                 imageVector = if (isPlaying && isPlayerPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = null,

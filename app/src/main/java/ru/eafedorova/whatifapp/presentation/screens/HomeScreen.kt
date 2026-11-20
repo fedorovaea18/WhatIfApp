@@ -41,7 +41,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +58,7 @@ import ru.eafedorova.whatifapp.data.categories
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 import androidx.compose.ui.text.font.FontWeight
+import ru.eafedorova.whatifapp.data.ThemePreferences
 
 @Composable
 fun HomeScreen(
@@ -67,6 +70,10 @@ fun HomeScreen(
     val context = LocalContext.current
     val repository = remember { QuestionRepository.create(context) }
     val scope = rememberCoroutineScope()
+
+    val haptic = LocalHapticFeedback.current
+    val themePrefs = remember { ThemePreferences(context) }
+    var vibrationEnabled by remember { mutableStateOf(true) }
 
     val viewModel: HomeViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -87,6 +94,7 @@ fun HomeScreen(
         repository.ensureSeeded()
         question = repository.randomQuestion(selectedCategories)
         loading = false
+        vibrationEnabled = themePrefs.getVibrationEnabled()
         viewModel.refreshProgress()
     }
 
@@ -207,6 +215,9 @@ fun HomeScreen(
 
                 Surface(
                     onClick = {
+                        if (vibrationEnabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
                         selectedCategories = when {
                             key == "all" -> setOf("all")
                             isSelected -> {
@@ -336,6 +347,9 @@ fun HomeScreen(
 
         Button(
             onClick = {
+                if (vibrationEnabled) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
                 scope.launch {
                     loading = true
                     question = repository.randomQuestion(selectedCategories)
