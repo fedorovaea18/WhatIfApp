@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            android.util.Log.d("THEME_DEBUG", "themeMode=$themeMode, darkTheme=$darkTheme")
+
             WhatIfAppTheme(darkTheme = darkTheme) {
                 NavGraph()
             }

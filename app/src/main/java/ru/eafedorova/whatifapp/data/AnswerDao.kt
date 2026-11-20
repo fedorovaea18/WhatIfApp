@@ -37,4 +37,12 @@ interface AnswerDao {
     @Query("SELECT MIN(createdAt) FROM answers")
     suspend fun getFirstAnswerDate(): Long?
 
+    @Query("DELETE FROM answers WHERE answerText != ''")
+    suspend fun deleteTextAnswers()
+
+    @Query("DELETE FROM answers WHERE voicePath IS NOT NULL AND voicePath != ''")
+    suspend fun deleteVoiceAnswers()
+
+    @Query("SELECT * FROM answers WHERE voicePath IS NOT NULL AND voicePath != ''")
+    suspend fun getVoiceAnswers(): List<Answer>
 }

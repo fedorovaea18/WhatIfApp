@@ -32,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -55,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,6 +67,7 @@ import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.notifications.NotificationScheduler
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +79,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
     val currentTheme by themePrefs.themeFlow.collectAsState(initial = "system")
     var vibrationEnabled by remember { mutableStateOf(true) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    var notificationsEnabled by remember { mutableStateOf(false) }
 
     val player = remember { VoicePlayer() }
 
@@ -105,13 +108,18 @@ fun SettingsScreen(onBack: () -> Unit) {
     var reminderHour by remember { mutableIntStateOf(19) }
     var reminderMinute by remember { mutableIntStateOf(0) }
 
+    // Состояния для диалогов
     var showFrequencyDialog by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showDeleteTextDialog by remember { mutableStateOf(false) }
+    var showDeleteVoiceDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         reminderFrequency = themePrefs.getReminderFrequency()
         reminderHour = themePrefs.getReminderHour()
         reminderMinute = themePrefs.getReminderMinute()
+        vibrationEnabled = themePrefs.getVibrationEnabled()
+        notificationsEnabled = themePrefs.getNotificationsEnabled()
 
         val allAnswers = db.answerDao().getAll().first()
         textAnswersCount = allAnswers.count { it.answerText.isNotBlank() }
@@ -218,7 +226,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                         SettingsSwitchRow(
                             title = "Вибрация",
                             checked = vibrationEnabled,
-                            onCheckedChange = { vibrationEnabled = it }
+                            onCheckedChange = {
+                                vibrationEnabled = it
+                                scope.launch { themePrefs.setVibrationEnabled(it) }
+                            }
                         )
                     }
                 }
@@ -232,15 +243,18 @@ fun SettingsScreen(onBack: () -> Unit) {
                             checked = notificationsEnabled,
                             onCheckedChange = { isEnabled ->
                                 notificationsEnabled = isEnabled
-                                if (isEnabled) {
-                                    NotificationScheduler.schedule(
-                                        context,
-                                        reminderFrequency,
-                                        reminderHour,
-                                        reminderMinute
-                                    )
-                                } else {
-                                    NotificationScheduler.cancelDailyQuestion(context)
+                                scope.launch {
+                                    themePrefs.setNotificationsEnabled(isEnabled)
+                                    if (isEnabled) {
+                                        NotificationScheduler.schedule(
+                                            context,
+                                            reminderFrequency,
+                                            reminderHour,
+                                            reminderMinute
+                                        )
+                                    } else {
+                                        NotificationScheduler.cancelDailyQuestion(context)
+                                    }
                                 }
                             }
                         )
@@ -324,7 +338,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 )
                             }
                             IconButton(
-                                onClick = { /* TODO: Диалог очистки текста */ },
+                                onClick = { showDeleteTextDialog = true },
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
@@ -362,7 +376,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 )
                             }
                             IconButton(
-                                onClick = { /* TODO: Диалог очистки голоса */ },
+                                onClick = { showDeleteVoiceDialog = true },
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
@@ -401,6 +415,8 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
         }
     }
+
+    // --- Диалоги ---
 
     if (showFrequencyDialog) {
         AlertDialog(
@@ -482,7 +498,142 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
         )
     }
+
+    if (showDeleteTextDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteTextDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Text(
+                    text = "Убрать все текстовые мысли?",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "Они исчезнут с устройства навсегда.\nНо у тебя появится место для новых мыслей",
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showDeleteTextDialog = false },
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                player.stop()
+                                val textAnswers = db.answerDao().getAllOnce().filter { it.answerText.isNotBlank() }
+                                textAnswers.forEach { answer ->
+                                    answer.voicePath?.let { path ->
+                                        runCatching { File(path).delete() }
+                                    }
+                                }
+                                db.answerDao().deleteTextAnswers()
+                                textAnswersCount = 0
+                                showDeleteTextDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Убрать", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            },
+            dismissButton = {}
+        )
+    }
+
+
+    if (showDeleteVoiceDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteVoiceDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Text(
+                    text = "Убрать все голосовые мысли?",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "Они исчезнут с устройства навсегда.\nНо у тебя появится место для новых мыслей",
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showDeleteVoiceDialog = false },
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                player.stop()
+                                val voiceAnswers = db.answerDao().getVoiceAnswers()
+                                voiceAnswers.forEach { answer ->
+                                    answer.voicePath?.let { path ->
+                                        runCatching { File(path).delete() }
+                                    }
+                                }
+                                db.answerDao().deleteVoiceAnswers()
+                                voiceAnswersCount = 0
+                                showDeleteVoiceDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Убрать", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            },
+            dismissButton = {}
+        )
+    }
 }
+
+// --- Вспомогательные функции (без изменений) ---
 
 private fun pluralizeAnswers(count: Int): String {
     val mod10 = count % 10
