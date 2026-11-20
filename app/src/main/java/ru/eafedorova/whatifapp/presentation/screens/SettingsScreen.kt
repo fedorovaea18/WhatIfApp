@@ -224,7 +224,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                     SettingsSection(title = "Прикосновения") {
                         SettingsSwitchRow(
-                            title = "Вибрация",
+                            title = "Виброотклик",
                             checked = vibrationEnabled,
                             onCheckedChange = {
                                 vibrationEnabled = it
