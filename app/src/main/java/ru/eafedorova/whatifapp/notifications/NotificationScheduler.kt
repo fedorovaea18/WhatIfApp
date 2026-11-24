@@ -13,6 +13,7 @@ object NotificationScheduler {
 
     fun schedule(context: Context, frequency: String, hour: Int, minute: Int) {
         val now = Calendar.getInstance()
+
         val target = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -30,7 +31,6 @@ object NotificationScheduler {
                     }
                 }
                 "weekly" -> {
-
                     while (get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
                         add(Calendar.DAY_OF_MONTH, 1)
                     }
@@ -45,7 +45,6 @@ object NotificationScheduler {
             "weekly" -> 7L
             else -> 1L
         }
-
 
         val requestBuilder = PeriodicWorkRequestBuilder<DailyQuestionWorker>(
             repeatInterval, TimeUnit.DAYS

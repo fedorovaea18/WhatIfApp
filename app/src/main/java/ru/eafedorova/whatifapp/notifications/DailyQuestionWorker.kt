@@ -59,26 +59,23 @@ class DailyQuestionWorker(
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
         )
 
-
         val notification = NotificationCompat.Builder(context, channelId)
-
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-
-
-            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_logo))
-
+            .setSmallIcon(R.drawable.ic_notification)
+            .setLargeIcon(
+                android.graphics.BitmapFactory.decodeResource(
+                    context.resources,
+                    R.drawable.ic_logo
+                )
+            )
             .setContentTitle("Пять минут с собой")
             .setContentText("Новый вопрос ждёт тебя. Что если бы ты...")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Новый вопрос ждёт тебя. Что если бы ты..."))
-
-
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Новый вопрос ждёт тебя.\n Что если бы ты..."))
             .setColor(android.graphics.Color.parseColor("#805A32"))
-
-
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_pen, "Открыть", pendingIntent)
+            .addAction(0, "Открыть", pendingIntent)
             .setAutoCancel(true)
             .build()
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (androidx.core.content.ContextCompat.checkSelfPermission(

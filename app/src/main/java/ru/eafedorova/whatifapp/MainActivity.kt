@@ -1,6 +1,8 @@
 package ru.eafedorova.whatifapp
 
 import android.Manifest
+import android.app.NotificationManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import ru.eafedorova.whatifapp.data.ThemePreferences
+import ru.eafedorova.whatifapp.notifications.NotificationScheduler
 import ru.eafedorova.whatifapp.presentation.navigation.NavGraph
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
 
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+        NotificationScheduler.schedule(this, "daily", 19, 0)
 
         setContent {
             val context = this
