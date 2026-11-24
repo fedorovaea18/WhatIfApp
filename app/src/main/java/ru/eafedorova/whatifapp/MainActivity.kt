@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.notifications.NotificationScheduler
 import ru.eafedorova.whatifapp.presentation.navigation.NavGraph
@@ -24,6 +26,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val themePrefs = ThemePreferences(this)
+
+        lifecycleScope.launch {
+            val hour = themePrefs.getReminderHour()
+            val minute = themePrefs.getReminderMinute()
+            val frequency = themePrefs.getReminderFrequency()
+            val enabled = themePrefs.getNotificationsEnabled()
+
+            if (enabled) {
+                NotificationScheduler.schedule(this@MainActivity, frequency, hour, minute)
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -38,7 +53,6 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        NotificationScheduler.schedule(this, "daily", 19, 0)
 
         setContent {
             val context = this

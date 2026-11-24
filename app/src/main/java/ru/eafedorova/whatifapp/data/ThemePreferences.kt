@@ -81,4 +81,23 @@ class ThemePreferences(private val context: Context) {
             prefs[VIBRATION_ENABLED_KEY] = enabled
         }
     }
+    val reminderFrequencyFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[FREQUENCY_KEY] ?: "daily"
+    }
+
+    val reminderHourFlow: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[HOUR_KEY] ?: 19
+    }
+
+    val reminderMinuteFlow: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[MINUTE_KEY] ?: 0
+    }
+
+    val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[NOTIFICATIONS_ENABLED_KEY] ?: false
+    }
+
+    val vibrationEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[VIBRATION_ENABLED_KEY] ?: true
+    }
 }

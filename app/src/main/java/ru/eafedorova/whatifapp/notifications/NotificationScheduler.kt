@@ -13,7 +13,6 @@ object NotificationScheduler {
 
     fun schedule(context: Context, frequency: String, hour: Int, minute: Int) {
         val now = Calendar.getInstance()
-
         val target = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -30,8 +29,8 @@ object NotificationScheduler {
                         add(Calendar.DAY_OF_MONTH, 1)
                     }
                 }
-                "weekly" -> {
-                    while (get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+                "weekends" -> {
+                    while (get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY && get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
                         add(Calendar.DAY_OF_MONTH, 1)
                     }
                 }
