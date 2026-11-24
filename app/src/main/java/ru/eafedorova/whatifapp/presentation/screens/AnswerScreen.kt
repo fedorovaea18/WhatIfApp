@@ -29,6 +29,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -408,18 +410,93 @@ fun AnswerScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         } else if (voiceFile != null) {
-                            Text(
-                                text = "ЗАПИСЬ ЗАВЕРШЕНА",
-                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Text(
-                                text = "ГОТОВ К ЗАПИСИ",
-                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "ЗАПИСЬ ЗАВЕРШЕНА",
+                                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.height(32.dp))
+
+                                Text(
+                                    text = String.format("%02d:%02d", recordingTime / 60, recordingTime % 60),
+                                    style = MaterialTheme.typography.displayLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = "Твоя мысль сохранена",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Spacer(Modifier.height(32.dp))
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(64.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    amplitude.forEach { amp ->
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight(amp)
+                                                .clip(RoundedCornerShape(50))
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                                        )
+                                    }
+                                }
+
+                                Spacer(Modifier.weight(1f))
+
+                                Button(
+                                    onClick = {
+                                        if (isPlaying) {
+                                            player.stop()
+                                            isPlaying = false
+                                        } else {
+                                            isPlaying = true
+                                            player.play(voiceFile!!.absolutePath) { isPlaying = false }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = null
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isPlaying) "Остановить" else "Прослушать",
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            }
                         }
+//                        } else {
+//                            Text(
+//                                text = "ГОТОВ К ЗАПИСИ",
+//                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+//                                color = MaterialTheme.colorScheme.onSurfaceVariant
+//                            )
+//                        }
 
                         Spacer(Modifier.height(32.dp))
 
@@ -692,7 +769,7 @@ fun AnswerScreen(
             ) {
                 Button(
                     onClick = { showClearDialog = true },
-                    enabled = (text.isNotBlank() || voiceFile != null || isRecording) && !isSaving,
+                    enabled = (text.isNotBlank() || voiceFile != null) && !isRecording && !isSaving,
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),

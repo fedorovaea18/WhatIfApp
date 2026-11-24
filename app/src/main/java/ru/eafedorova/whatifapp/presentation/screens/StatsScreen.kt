@@ -368,7 +368,7 @@ private fun CategoryRow(item: CategoryCount, totalInCategory: Int) {
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(15.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
