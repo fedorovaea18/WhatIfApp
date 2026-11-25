@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,8 +50,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -68,7 +67,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -293,7 +291,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
                             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                                 Text(
-                                    text = "Как часто",
+                                    text = "Как часто напоминать?",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -335,8 +333,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                                         ) {
                                             Text(
                                                 text = label,
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontSize = 11.sp
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontSize = 13.sp
                                                 ),
                                                 maxLines = 1
                                             )
@@ -354,7 +352,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Во сколько",
+                                    text = "Когда напомнить?",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -379,34 +377,71 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 Spacer(Modifier.height(12.dp))
                                 Card(
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
+                                            alpha = 0.5f
+                                        )
                                     ),
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.NotificationsOff,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(Modifier.width(8.dp))
                                         Text(
-                                            "⚠ Уведомления отключены в системе",
+                                            text = "Уведомления сейчас выключены",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
-                                        Spacer(Modifier.height(8.dp))
+                                        Spacer(Modifier.height(4.dp))
+
                                         Text(
-                                            "Открыть настройки →",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.clickable {
-                                                val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                                                    }
-                                                } else {
-                                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                        data = android.net.Uri.parse("package:${context.packageName}")
-                                                    }
-                                                }
-                                                context.startActivity(intent)
-                                            }
+                                            text = "Чтобы не пропустить вопрос, их нужно включить",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onErrorContainer.copy(
+                                                alpha = 0.8f
+                                            )
                                         )
+                                        Spacer(Modifier.height(4.dp))
+
+                                        TextButton(
+                                            onClick = {
+                                                val intent =
+                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                            putExtra(
+                                                                Settings.EXTRA_APP_PACKAGE,
+                                                                context.packageName
+                                                            )
+                                                        }
+                                                    } else {
+                                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                            data =
+                                                                android.net.Uri.parse("package:${context.packageName}")
+                                                        }
+                                                    }
+                                                context.startActivity(intent)
+                                            },
+                                            contentPadding = PaddingValues(0.dp),
+                                            modifier = Modifier.align(Alignment.Start)
+                                        ) {
+                                            Text(
+                                                text = "Включить в настройках",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(Modifier.width(4.dp))
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowRight,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1008,7 +1043,11 @@ fun CustomTimePickerDialog(
                         Text(
                             String.format("%02d", initialHour),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 24.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1050,7 +1089,11 @@ fun CustomTimePickerDialog(
                         Text(
                             String.format("%02d", initialMinute),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 24.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1075,7 +1118,8 @@ fun CustomTimePickerDialog(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                    ),
+                    modifier = Modifier.weight(1f).height(48.dp)
                 ) {
                     Text("Отмена", style = MaterialTheme.typography.labelLarge)
                 }
@@ -1090,10 +1134,10 @@ fun CustomTimePickerDialog(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    ),
+                    modifier = Modifier.weight(1f).height(48.dp)
                 ) {
-                    Spacer(Modifier.width(8.dp))
-                    Text("Сохранить", style = MaterialTheme.typography.labelLarge)
+                    Text("Готово", style = MaterialTheme.typography.labelLarge)
                 }
             }
         },
