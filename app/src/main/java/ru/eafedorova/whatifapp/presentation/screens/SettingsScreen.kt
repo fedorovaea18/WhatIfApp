@@ -84,6 +84,7 @@ import ru.eafedorova.whatifapp.audio.VoicePlayer
 import ru.eafedorova.whatifapp.data.AppDatabase
 import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.notifications.NotificationScheduler
+import ru.eafedorova.whatifapp.presentation.components.Footer
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
 import java.io.File
@@ -143,10 +144,6 @@ fun SettingsScreen(onBack: () -> Unit) {
             val channel = notificationManager.getNotificationChannel("daily_question")
             channel == null || channel.importance != android.app.NotificationManager.IMPORTANCE_NONE
         } else true
-    }
-
-    LaunchedEffect(reminderHour, reminderMinute) {
-        android.util.Log.d("TIME_DEBUG", "UI обновился: $reminderHour:$reminderMinute")
     }
 
     Scaffold(
@@ -530,24 +527,17 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(24.dp))
             }
 
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Footer {
                 Text(
-                    "Что если?",
+                    text = "Что если?",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(Modifier.height(2.dp))
                 Text(
-                    "Версия 1.0.0",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Версия 1.0.0",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +68,8 @@ import ru.eafedorova.whatifapp.data.Answer
 import ru.eafedorova.whatifapp.data.AppDatabase
 import ru.eafedorova.whatifapp.data.ThemePreferences
 import ru.eafedorova.whatifapp.data.categories
+import ru.eafedorova.whatifapp.presentation.components.Footer
+import ru.eafedorova.whatifapp.presentation.components.FooterSingleLine
 import ru.eafedorova.whatifapp.presentation.ui.theme.WhatIfAppTheme
 import ru.eafedorova.whatifapp.presentation.ui.theme.customColors
 import ru.eafedorova.whatifapp.presentation.ui.theme.labelCapsSmall
@@ -95,7 +99,7 @@ fun HistoryScreen(
     var answerToDelete by remember { mutableStateOf<Answer?>(null) }
     var playingId by remember { mutableStateOf<Long?>(null) }
 
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         vibrationEnabled = themePrefs.getVibrationEnabled()
@@ -163,206 +167,190 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_big_book),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = "Твои мысли",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Мысли, к которым можно вернуться",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Последние записи · ${answers.size} из ${answers.size}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (answers.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_notebook),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(40.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(Modifier.height(16.dp))
-
-                                Text(
-                                    text = "Пока нет ответов",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Первая мысль может быть совсем короткой. Дай ей место здесь",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center
-                                )
-                                Spacer(Modifier.height(24.dp))
-
-                                Button(
-                                    onClick = onGoToHome,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_edit),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        "Первый ответ",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    state = listState,
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(answers, key = { it.id }) { answer ->
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.EndToStart) {
-                                    answerToDelete = answer
-                                    false
-                                } else {
-                                    false
-                                }
-                            }
+            Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_big_book),
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
                         )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = "Твои мысли",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Мысли, к которым можно вернуться",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            enableDismissFromStartToEnd = false,
-                            enableDismissFromEndToStart = true,
-                            backgroundContent = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(MaterialTheme.customColors.attention)
-                                        .padding(horizontal = 24.dp),
-                                    contentAlignment = Alignment.CenterEnd
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Последние записи · ${answers.size} из ${answers.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+
+                if (answers.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.ic_trash),
-                                        contentDescription = "Удалить",
-                                        tint = MaterialTheme.colorScheme.onSurface
+                                        painter = painterResource(id = R.drawable.ic_notebook),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp),
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
+                                    Spacer(Modifier.height(16.dp))
+                                    Text(
+                                        text = "Пока нет ответов",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "Первая мысль может быть совсем короткой. Дай ей место здесь",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(Modifier.height(24.dp))
+                                    Button(
+                                        onClick = onGoToHome,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_edit),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "Первый ответ",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
                                 }
                             }
-                        ) {
-                            AnswerCard(
-                                answer = answer,
-                                isPlaying = playingId == answer.id,
-                                player = player,
-                                vibrationEnabled = vibrationEnabled,
-                                onPlayPause = {
-                                    val path = answer.voicePath ?: return@AnswerCard
-                                    if (playingId == answer.id) {
-                                        if (player.isPlaying.value) player.pause() else player.resume()
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(answers, key = { it.id }) { answer ->
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    if (value == SwipeToDismissBoxValue.EndToStart) {
+                                        answerToDelete = answer
+                                        false
                                     } else {
-                                        player.stop()
-                                        playingId = answer.id
-                                        player.play(path) { playingId = null }
+                                        false
                                     }
-                                },
-                                onDeleteClick = { answerToDelete = answer }
+                                }
                             )
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(24.dp))
+                                            .background(MaterialTheme.customColors.attention)
+                                            .padding(horizontal = 24.dp),
+                                        contentAlignment = Alignment.CenterEnd
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_trash),
+                                            contentDescription = "Удалить",
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            ) {
+                                AnswerCard(
+                                    answer = answer,
+                                    isPlaying = playingId == answer.id,
+                                    player = player,
+                                    vibrationEnabled = vibrationEnabled,
+                                    onPlayPause = {
+                                        val path = answer.voicePath ?: return@AnswerCard
+                                        if (playingId == answer.id) {
+                                            if (player.isPlaying.value) player.pause() else player.resume()
+                                        } else {
+                                            player.stop()
+                                            playingId = answer.id
+                                            player.play(path) { playingId = null }
+                                        }
+                                    },
+                                    onDeleteClick = { answerToDelete = answer }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp, top = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Footer {
                 if (answers.isNotEmpty()) {
                     val isScrollable = listState.canScrollForward
                     val message =
                         if (isScrollable) "Ниже — твои прошлые размышления" else "Твои мысли бережно хранятся здесь"
                     val iconRes =
                         if (isScrollable) R.drawable.ic_arrow_down else R.drawable.ic_heart
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = iconRes),
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    FooterSingleLine(
+                        icon = painterResource(id = iconRes),
+                        text = message,
+                    )
                 }
             }
+
 
             answerToDelete?.let { answer ->
                 AlertDialog(
@@ -395,7 +383,6 @@ fun HistoryScreen(
                                     width = 1.dp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
-
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
@@ -406,8 +393,6 @@ fun HistoryScreen(
                                     style = MaterialTheme.typography.labelLarge
                                 )
                             }
-
-
 
                             Button(
                                 onClick = {
