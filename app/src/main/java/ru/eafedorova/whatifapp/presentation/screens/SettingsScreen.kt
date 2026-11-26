@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -615,38 +616,44 @@ fun SettingsScreen(onBack: () -> Unit) {
     if (showDeleteTextDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteTextDialog = false },
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .widthIn(max = 400.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
                     text = "Убрать все текстовые мысли?",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "Они исчезнут с устройства навсегда.\nНо у тебя появится место для новых мыслей",
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
+                    text = "Они исчезнут навсегда. Освободится место для новых",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = { showDeleteTextDialog = false },
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) {
-                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Оставить",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
+
 
                     Button(
                         onClick = {
@@ -668,9 +675,13 @@ fun SettingsScreen(onBack: () -> Unit) {
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Убрать", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Убрать",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp)
+                        )
                     }
                 }
             },
@@ -682,37 +693,42 @@ fun SettingsScreen(onBack: () -> Unit) {
     if (showDeleteVoiceDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteVoiceDialog = false },
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .widthIn(max = 400.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
                     text = "Убрать все голосовые мысли?",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
                 Text(
-                    text = "Они исчезнут с устройства навсегда.\nНо у тебя появится место для новых мыслей",
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
+                    text = "Они исчезнут навсегда. Освободится место для новых",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = { showDeleteVoiceDialog = false },
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) {
-                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Оставить",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     Button(
@@ -735,9 +751,13 @@ fun SettingsScreen(onBack: () -> Unit) {
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Убрать", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Убрать",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp)
+                        )
                     }
                 }
             },
@@ -991,12 +1011,15 @@ fun CustomTimePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier
+            .padding(horizontal = 24.dp)
+            .widthIn(max = 400.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(24.dp),
         title = {
             Text(
-                "Выбери удобное время",
-                style = MaterialTheme.typography.headlineMedium,
+                text = "Выбери удобное время",
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
@@ -1020,7 +1043,7 @@ fun CustomTimePickerDialog(
                         }
                     },
                     modifier = Modifier
-                        .width(70.dp)
+                        .width(72.dp)
                         .focusRequester(hourFocusRequester),
                     textStyle = LocalTextStyle.current.copy(
                         textAlign = TextAlign.Center,
@@ -1066,7 +1089,7 @@ fun CustomTimePickerDialog(
                         }
                     },
                     modifier = Modifier
-                        .width(70.dp)
+                        .width(72.dp)
                         .focusRequester(minuteFocusRequester),
                     textStyle = LocalTextStyle.current.copy(
                         textAlign = TextAlign.Center,
@@ -1098,20 +1121,17 @@ fun CustomTimePickerDialog(
         confirmButton = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-
-                Button(
+                TextButton(
                     onClick = onDismiss,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    modifier = Modifier.weight(1f).height(48.dp)
+                    modifier = Modifier.weight(1f).height(44.dp)
                 ) {
-                    Text("Отмена", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        "Отмена",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
 
                 Button(
@@ -1120,18 +1140,21 @@ fun CustomTimePickerDialog(
                         val m = minuteText.toIntOrNull() ?: initialMinute
                         onConfirm(h, m)
                     },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    modifier = Modifier.weight(1f).height(48.dp)
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Готово", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        "Готово",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp)
+                    )
                 }
             }
         },
         dismissButton = {}
-
     )
 }

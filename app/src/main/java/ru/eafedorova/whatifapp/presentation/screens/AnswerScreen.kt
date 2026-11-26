@@ -16,6 +16,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,6 +48,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -489,14 +492,14 @@ fun AnswerScreen(
                                     )
                                 }
                             }
+
+                        } else {
+                            Text(
+                                text = "ГОТОВ К ЗАПИСИ",
+                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-//                        } else {
-//                            Text(
-//                                text = "ГОТОВ К ЗАПИСИ",
-//                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-//                                color = MaterialTheme.colorScheme.onSurfaceVariant
-//                            )
-//                        }
 
                         Spacer(Modifier.height(32.dp))
 
@@ -858,39 +861,46 @@ fun AnswerScreen(
 
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .widthIn(max = 400.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
                     text = if (isClearingVoice) "Убрать голос?" else "Убрать текст?",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             },
             text = {
                 Text(
                     text = if (isClearingVoice) {
-                        "Здесь останется только текст (если он есть). Голосовая мысль пропадёт"
+                        "Останется только текст (если он есть). Голосовая мысль пропадёт"
                     } else {
-                        "Здесь останется только голос (если он есть). Текст пропадёт"
+                        "Останется только голос (если он есть). Текст пропадёт"
                     },
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = { showClearDialog = false },
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) {
-                        Text("Оставить", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Оставить",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     Button(
@@ -916,11 +926,12 @@ fun AnswerScreen(
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
-                            text = "Убрать",
-                            style = MaterialTheme.typography.labelLarge
+                            "Убрать",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp)
                         )
                     }
                 }

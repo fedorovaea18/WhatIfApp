@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -355,19 +357,25 @@ fun HistoryScreen(
             answerToDelete?.let { answer ->
                 AlertDialog(
                     onDismissRequest = { answerToDelete = null },
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .widthIn(max = 400.dp),
                     containerColor = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(24.dp),
                     title = {
                         Text(
                             text = "Убрать эту мысль?",
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     text = {
                         Text(
-                            text = "Она исчезнет с устройства навсегда.\nНо у тебя появится место для новых мыслей",
-                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
+                            text = "Она исчезнет навсегда. Освободится место для новой",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = 15.sp,
+                                lineHeight = 20.sp
+                            ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -376,21 +384,15 @@ fun HistoryScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedButton(
+
+                            TextButton(
                                 onClick = { answerToDelete = null },
-                                shape = RoundedCornerShape(16.dp),
-                                border = BorderStroke(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f).height(44.dp)
                             ) {
                                 Text(
                                     "Оставить",
-                                    style = MaterialTheme.typography.labelLarge
+                                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
@@ -410,11 +412,15 @@ fun HistoryScreen(
                                     containerColor = MaterialTheme.colorScheme.error,
                                     contentColor = MaterialTheme.colorScheme.onError
                                 ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
-                                    "Убрать",
-                                    style = MaterialTheme.typography.labelLarge
+                                    "Убрать", style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = 14.sp
+                                    )
                                 )
                             }
                         }
