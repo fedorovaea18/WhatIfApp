@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,7 +47,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
@@ -55,8 +55,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -78,6 +80,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.eafedorova.whatifapp.R
@@ -120,17 +125,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
     val currentTheme by themePrefs.themeFlow.collectAsState(initial = "system")
 
-    LaunchedEffect(Unit) {
-        vibrationEnabled = themePrefs.getVibrationEnabled()
-        notificationsEnabled = themePrefs.getNotificationsEnabled()
-        reminderHour = themePrefs.getReminderHour()
-        reminderMinute = themePrefs.getReminderMinute()
-        reminderFrequency = themePrefs.getReminderFrequency()
-
-        val allAnswers = db.answerDao().getAll().first()
-        textAnswersCount = allAnswers.count { it.answerText.isNotBlank() }
-        voiceAnswersCount = allAnswers.count { !it.voicePath.isNullOrBlank() }
-
+    val checkNotificationStatus = {
         notificationsPermissionGranted =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ContextCompat.checkSelfPermission(
@@ -145,6 +140,33 @@ fun SettingsScreen(onBack: () -> Unit) {
             val channel = notificationManager.getNotificationChannel("daily_question")
             channel == null || channel.importance != android.app.NotificationManager.IMPORTANCE_NONE
         } else true
+    }
+
+    LaunchedEffect(Unit) {
+        vibrationEnabled = themePrefs.getVibrationEnabled()
+        notificationsEnabled = themePrefs.getNotificationsEnabled()
+        reminderHour = themePrefs.getReminderHour()
+        reminderMinute = themePrefs.getReminderMinute()
+        reminderFrequency = themePrefs.getReminderFrequency()
+
+        val allAnswers = db.answerDao().getAll().first()
+        textAnswersCount = allAnswers.count { it.answerText.isNotBlank() }
+        voiceAnswersCount = allAnswers.count { !it.voicePath.isNullOrBlank() }
+
+        checkNotificationStatus()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                checkNotificationStatus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Scaffold(
@@ -321,7 +343,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                             },
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .height(36.dp),
+                                                .heightIn(min = 44.dp), // Увеличено с 36dp
                                             shape = RoundedCornerShape(12.dp),
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
@@ -344,6 +366,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp) // Явная минимальная высота
                                     .clickable { showTimePicker = true }
                                     .padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -371,6 +394,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                                 }
                             }
 
+
                             if (!notificationsPermissionGranted || !channelEnabled) {
                                 Spacer(Modifier.height(12.dp))
                                 Card(
@@ -383,62 +407,65 @@ fun SettingsScreen(onBack: () -> Unit) {
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        Icon(
-                                            imageVector = androidx.compose.material.icons.Icons.Default.NotificationsOff,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(
-                                            text = "Уведомления сейчас выключены",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-
-                                        Text(
-                                            text = "Чтобы не пропустить вопрос, их нужно включить",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onErrorContainer.copy(
-                                                alpha = 0.8f
-                                            )
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-
-                                        TextButton(
-                                            onClick = {
-                                                val intent =
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                                            putExtra(
-                                                                Settings.EXTRA_APP_PACKAGE,
-                                                                context.packageName
-                                                            )
-                                                        }
-                                                    } else {
-                                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                            data =
-                                                                android.net.Uri.parse("package:${context.packageName}")
-                                                        }
-                                                    }
-                                                context.startActivity(intent)
-                                            },
-                                            contentPadding = PaddingValues(0.dp),
-                                            modifier = Modifier.align(Alignment.Start)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = "Включить в настройках",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                            Spacer(Modifier.width(4.dp))
                                             Icon(
-                                                imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowRight,
+                                                imageVector = androidx.compose.material.icons.Icons.Default.NotificationsOff,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp),
-                                                tint = MaterialTheme.colorScheme.primary
+                                                tint = MaterialTheme.colorScheme.onSecondaryContainer
                                             )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                text = "Уведомления сейчас выключены",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            text = "Чтобы не пропустить вопрос, их нужно включить в настройках",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                        Box(modifier = Modifier.minimumInteractiveComponentSize()) {
+                                            TextButton(
+                                                onClick = {
+                                                    val intent =
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                                putExtra(
+                                                                    Settings.EXTRA_APP_PACKAGE,
+                                                                    context.packageName
+                                                                )
+                                                            }
+                                                        } else {
+                                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                                data =
+                                                                    android.net.Uri.parse("package:${context.packageName}")
+                                                            }
+                                                        }
+                                                    context.startActivity(intent)
+                                                },
+                                                contentPadding = PaddingValues(
+                                                    vertical = 4.dp
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = "В настройки",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                                Spacer(Modifier.width(4.dp))
+                                                Icon(
+                                                    imageVector = androidx.compose.material.icons.Icons.Default.KeyboardArrowRight,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -473,9 +500,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            // Убран size(40.dp), чтобы IconButton использовал стандартные 48dp
                             IconButton(
                                 onClick = { showDeleteTextDialog = true },
-                                modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_trash),
@@ -513,7 +540,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                             }
                             IconButton(
                                 onClick = { showDeleteVoiceDialog = true },
-                                modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_trash),
@@ -560,6 +586,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clickable {
                                     reminderFrequency = key
                                     showFrequencyDialog = false
@@ -645,7 +672,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                 ) {
                     TextButton(
                         onClick = { showDeleteTextDialog = false },
-                        modifier = Modifier.weight(1f).height(44.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
                     ) {
                         Text(
                             "Оставить",
@@ -675,7 +704,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         ),
-                        modifier = Modifier.weight(1f).height(44.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
@@ -722,7 +753,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                 ) {
                     TextButton(
                         onClick = { showDeleteVoiceDialog = false },
-                        modifier = Modifier.weight(1f).height(44.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
                     ) {
                         Text(
                             "Оставить",
@@ -751,7 +784,9 @@ fun SettingsScreen(onBack: () -> Unit) {
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         ),
-                        modifier = Modifier.weight(1f).height(44.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
@@ -842,8 +877,12 @@ private fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     subtitle: String? = null,
 ) {
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -880,6 +919,7 @@ private fun SettingsValueRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -910,7 +950,7 @@ private fun ThemeButton(
     val isSelected = value == currentTheme
     Button(
         onClick = onClick,
-        modifier = modifier.height(40.dp),
+        modifier = modifier.heightIn(min = 44.dp), // Увеличено с 40dp
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primary
@@ -918,7 +958,7 @@ private fun ThemeButton(
             contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
             else MaterialTheme.colorScheme.onSecondaryContainer
         ),
-        border =  null,
+        border = null,
         contentPadding = PaddingValues(0.dp)
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium)
@@ -929,7 +969,7 @@ private fun ThemeButton(
 @Composable
 fun CompactSwitch(
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val trackWidth = 44.dp
@@ -967,28 +1007,34 @@ fun CompactSwitch(
 
     Box(
         modifier = modifier
-            .size(width = trackWidth, height = trackHeight)
-            .clip(CircleShape)
-            .background(currentTrackColor)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = CircleShape
-            )
+            .size(48.dp)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = trackHeight / 2),
-                onClick = { onCheckedChange(!checked) }
+                indication = ripple(bounded = false, radius = 24.dp),
+                onClick = { onCheckedChange?.invoke(!checked) }
             ),
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .offset(x = thumbOffset)
-                .size(thumbSize)
+                .size(width = trackWidth, height = trackHeight)
                 .clip(CircleShape)
-                .background(currentThumbColor)
-        )
+                .background(currentTrackColor)
+                .border(
+                    width = 1.dp,
+                    color = borderColor,
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Box(
+                modifier = Modifier
+                    .offset(x = thumbOffset)
+                    .size(thumbSize)
+                    .clip(CircleShape)
+                    .background(currentThumbColor)
+            )
+        }
     }
 }
 
@@ -1125,7 +1171,9 @@ fun CustomTimePickerDialog(
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f).height(44.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
                 ) {
                     Text(
                         "Отмена",
@@ -1145,7 +1193,9 @@ fun CustomTimePickerDialog(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
                     contentPadding = PaddingValues(0.dp)
                 ) {
                     Text(

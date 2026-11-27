@@ -116,7 +116,7 @@ fun AnswerScreen(
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     var recordingTime by remember { mutableIntStateOf(0) }
-    var amplitude by remember { mutableStateOf(List(20) { 0f }) }
+    var amplitude by remember { mutableStateOf(List(24) { 0f }) } // Убедимся, что размер 24
 
     LaunchedEffect(Unit) {
         vibrationEnabled = themePrefs.getVibrationEnabled()
@@ -141,8 +141,6 @@ fun AnswerScreen(
             context, Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
-        android.util.Log.d("PERMISSION_CHECK", "Есть разрешение? $hasPermission")
-
         if (hasPermission) {
             try {
                 voiceFile = recorder.start()
@@ -151,11 +149,9 @@ fun AnswerScreen(
                 recordingTime = 0
             } catch (e: Exception) {
                 e.printStackTrace()
-                android.util.Log.e("RECORD_CRASH", "Ошибка: ${e.message}")
                 Toast.makeText(context, "Ошибка записи: ${e.message}", Toast.LENGTH_LONG).show()
             }
         } else {
-            android.util.Log.d("PERMISSION_CHECK", "Запрашиваем разрешение...")
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
@@ -195,7 +191,6 @@ fun AnswerScreen(
                 }
             }
         } else if (isRecording && isPaused) {
-
             launch {
                 kotlinx.coroutines.delay(50)
                 if (isRecording && isPaused) {
@@ -208,20 +203,6 @@ fun AnswerScreen(
                     }
                 }
             }
-        } else {
-
-
-            /*
-            launch {
-                val targetAmplitude = List(24) { 0.05f }
-                repeat(10) {
-                    amplitude = amplitude.zip(targetAmplitude) { old, target ->
-                        old + (target - old) * 0.2f
-                    }
-                    kotlinx.coroutines.delay(30)
-                }
-            }
-            */
         }
     }
 
@@ -363,114 +344,193 @@ fun AnswerScreen(
                 )
             ) {
                 if (isRecording || isPreparingToRecord) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        IconButton(
+                            onClick = {
+                                if (isRecording) recorder.cancel()
+                                isRecording = false
+                                isPaused = false
+                                isPreparingToRecord = false
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 8.dp, end = 8.dp)
+                                .size(48.dp)
                         ) {
-                            IconButton(
-                                onClick = {
-                                    if (isRecording) recorder.cancel()
-                                    isRecording = false
-                                    isPaused = false
-                                    isPreparingToRecord = false
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Закрыть",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Закрыть",
+                                //modifier = Modifier.size(28.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
 
-                        Spacer(Modifier.weight(0.5f))
 
-                        if (isRecording && !isPaused) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.customColors.attention)
-                                )
-                                Spacer(Modifier.width(8.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 24.dp, end = 24.dp, top = 64.dp, bottom = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            //Spacer(Modifier.height(40.dp))
+                            Spacer(Modifier.weight(0.5f))
+
+                            if (isRecording && !isPaused) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.customColors.attention)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "ИДЁТ ЗАПИСЬ",
+                                        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                        color = MaterialTheme.customColors.attention
+                                    )
+                                }
+                            } else if (isPaused) {
                                 Text(
-                                    text = "ИДЁТ ЗАПИСЬ",
+                                    text = "ПАУЗА",
                                     style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                    color = MaterialTheme.customColors.attention
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else if (voiceFile != null) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "ЗАПИСЬ ЗАВЕРШЕНА",
+                                        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(Modifier.height(32.dp))
+                                    Text(
+                                        text = String.format("%02d:%02d", recordingTime / 60, recordingTime % 60),
+                                        style = MaterialTheme.typography.displayLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "Твоя мысль сохранена",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.height(32.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(64.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        amplitude.forEach { amp ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxHeight(amp)
+                                                    .clip(RoundedCornerShape(50))
+                                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.weight(1f))
+                                    Button(
+                                        onClick = {
+                                            if (isPlaying) {
+                                                player.stop()
+                                                isPlaying = false
+                                            } else {
+                                                isPlaying = true
+                                                player.play(voiceFile!!.absolutePath) { isPlaying = false }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            contentDescription = null
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            text = if (isPlaying) "Остановить" else "Прослушать",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
+                                }
+                            } else {
+                                Text(
+                                    text = "ГОТОВ К ЗАПИСИ",
+                                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                        } else if (isPaused) {
-                            Text(
-                                text = "ПАУЗА",
-                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else if (voiceFile != null) {
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "ЗАПИСЬ ЗАВЕРШЕНА",
-                                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(Modifier.height(32.dp))
+                            Spacer(Modifier.height(32.dp))
 
+                            // Таймер (показываем, если не завершено)
+                            if (voiceFile == null) {
                                 Text(
-                                    text = String.format("%02d:%02d", recordingTime / 60, recordingTime % 60),
+                                    text = String.format(
+                                        "%02d:%02d",
+                                        recordingTime / 60,
+                                        recordingTime % 60
+                                    ),
                                     style = MaterialTheme.typography.displayLarge,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    text = "Твоя мысль сохранена",
+                                    text = "Говори в своём ритме",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
                                 Spacer(Modifier.height(32.dp))
 
+                                // ИСПРАВЛЕННАЯ ВИЗУАЛИЗАЦИЯ ВОЛНЫ
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(64.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp), // Фиксированный отступ
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     amplitude.forEach { amp ->
                                         Box(
                                             modifier = Modifier
-                                                .weight(1f)
-                                                .fillMaxHeight(amp)
-                                                .clip(RoundedCornerShape(50))
-                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                                                .weight(1f) // Черточки делят ширину поровну
+                                                .fillMaxHeight(if (isRecording && !isPaused) amp else 0.1f)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(
+                                                    MaterialTheme.colorScheme.primary.copy(
+                                                        alpha = if (isRecording && !isPaused) 1f else 0.3f
+                                                    )
+                                                )
                                         )
                                     }
                                 }
+                            }
 
-                                Spacer(Modifier.weight(1f))
+                            Spacer(Modifier.weight(1f))
 
+                            if (!isRecording && !isPaused && voiceFile == null) {
                                 Button(
                                     onClick = {
-                                        if (isPlaying) {
-                                            player.stop()
-                                            isPlaying = false
-                                        } else {
-                                            isPlaying = true
-                                            player.play(voiceFile!!.absolutePath) { isPlaying = false }
+                                        if (vibrationEnabled) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         }
+                                        startRecording()
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -482,166 +542,88 @@ fun AnswerScreen(
                                     )
                                 ) {
                                     Icon(
-                                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                        contentDescription = null
+                                        painterResource(id = R.drawable.ic_microphone),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        text = if (isPlaying) "Остановить" else "Прослушать",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
+                                    Text("Начать запись", style = MaterialTheme.typography.labelLarge)
                                 }
-                            }
-
-                        } else {
-                            Text(
-                                text = "ГОТОВ К ЗАПИСИ",
-                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Spacer(Modifier.height(32.dp))
-
-
-                        Text(
-                            text = String.format(
-                                "%02d:%02d",
-                                recordingTime / 60,
-                                recordingTime % 60
-                            ),
-                            style = MaterialTheme.typography.displayLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Говори в своём ритме",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(Modifier.height(32.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(64.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            amplitude.forEach { amp ->
-                                Box(
-                                    modifier = Modifier
-                                        .width(4.dp)
-                                        .fillMaxHeight(if (isRecording && !isPaused) amp else 0.1f)
-                                        .clip(RoundedCornerShape(3.dp))
-                                        .background(
-                                            MaterialTheme.colorScheme.primary.copy(
-                                                alpha = if (isRecording && !isPaused) 1f else 0.3f
-                                            )
-                                        )
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.weight(1f))
-
-                        if (!isRecording && !isPaused) {
-                            Button(
-                                onClick = {
-                                    if (vibrationEnabled) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    }
-                                    startRecording()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            ) {
-                                Icon(
-                                    painterResource(id = R.drawable.ic_microphone),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Начать запись", style = MaterialTheme.typography.labelLarge)
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Button(
-                                    onClick = {
-                                        if (isPaused) {
-                                            recorder.resume()
-                                            isPaused = false
-                                        } else {
-                                            recorder.pause()
-                                            isPaused = true
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
+                            } else if (isRecording || isPaused) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    if (isPaused) {
-                                        Text(
-                                            "Продолжить",
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    } else {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Box(
-                                                Modifier
-                                                    .size(4.dp, 16.dp)
-                                                    .background(MaterialTheme.colorScheme.onSurface)
-                                            )
-                                            Box(
-                                                Modifier
-                                                    .size(4.dp, 16.dp)
-                                                    .background(MaterialTheme.colorScheme.onSurface)
-                                            )
-                                        }
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Пауза", style = MaterialTheme.typography.labelLarge)
-                                    }
-                                }
-
-                                Button(
-                                    onClick = {
-                                        stopRecording()
-                                        isPaused = false
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                ) {
-                                    Box(
+                                    Button(
+                                        onClick = {
+                                            if (isPaused) {
+                                                recorder.resume()
+                                                isPaused = false
+                                            } else {
+                                                recorder.pause()
+                                                isPaused = true
+                                            }
+                                        },
                                         modifier = Modifier
-                                            .size(12.dp)
-                                            .clip(RoundedCornerShape(2.dp))
-                                            .background(MaterialTheme.colorScheme.onPrimary)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Стоп", style = MaterialTheme.typography.labelLarge)
+                                            .weight(1f)
+                                            .height(56.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    ) {
+                                        if (isPaused) {
+                                            Text(
+                                                "Продолжить",
+                                                style = MaterialTheme.typography.labelLarge
+                                            )
+                                        } else {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Box(
+                                                    Modifier
+                                                        .size(4.dp, 16.dp)
+                                                        .background(MaterialTheme.colorScheme.onSurface)
+                                                )
+                                                Box(
+                                                    Modifier
+                                                        .size(4.dp, 16.dp)
+                                                        .background(MaterialTheme.colorScheme.onSurface)
+                                                )
+                                            }
+                                            Spacer(Modifier.width(8.dp))
+                                            Text("Пауза", style = MaterialTheme.typography.labelLarge)
+                                        }
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            stopRecording()
+                                            isPaused = false
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(56.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(RoundedCornerShape(2.dp))
+                                                .background(MaterialTheme.colorScheme.onPrimary)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Стоп", style = MaterialTheme.typography.labelLarge)
+                                    }
                                 }
                             }
+
+                            // Добавляем отступ снизу, чтобы кнопки не прилипали к краю
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
                 } else {
@@ -939,5 +921,4 @@ fun AnswerScreen(
             dismissButton = {}
         )
     }
-
 }
