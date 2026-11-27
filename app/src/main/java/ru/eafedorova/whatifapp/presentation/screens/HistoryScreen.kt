@@ -325,9 +325,11 @@ fun HistoryScreen(
                                         if (playingId == answer.id) {
                                             if (player.isPlaying.value) player.pause() else player.resume()
                                         } else {
-                                            player.stop()
                                             playingId = answer.id
-                                            player.play(path) { playingId = null }
+                                            player.stop()
+                                            player.play(path) {
+                                                if (playingId == answer.id) playingId = null
+                                            }
                                         }
                                     },
                                     onDeleteClick = { answerToDelete = answer }
@@ -400,7 +402,8 @@ fun HistoryScreen(
                                 onClick = {
                                     scope.launch {
                                         if (playingId == answer.id) {
-                                            player.stop(); playingId = null
+                                            player.stop()
+                                            playingId = null
                                         }
                                         answer.voicePath?.let { path -> runCatching { File(path).delete() } }
                                         db.answerDao().deleteById(answer.id)
@@ -441,9 +444,14 @@ private fun AnswerCard(
     onDeleteClick: () -> Unit,
     vibrationEnabled: Boolean
 ) {
-    val position by player.position.collectAsState()
-    val duration by player.duration.collectAsState()
-    val isPlayerPlaying by player.isPlaying.collectAsState()
+    val rawPosition by player.position.collectAsState()
+    val rawDuration by player.duration.collectAsState()
+    val rawIsPlaying by player.isPlaying.collectAsState()
+
+    val position = if (isPlaying) rawPosition else 0
+    val duration = if (isPlaying) rawDuration else 0
+    val isPlayerPlaying = isPlaying && rawIsPlaying
+
     val haptic = LocalHapticFeedback.current
 
     Card(
@@ -483,12 +491,17 @@ private fun AnswerCard(
                             .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
-                        IconButton(onClick = onPlayPause, modifier = Modifier.fillMaxSize()) {
-                            if (vibrationEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
+                        IconButton(
+                            onClick = {
+                                if (vibrationEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                                onPlayPause()
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
                             Icon(
-                                imageVector = if (isPlaying && isPlayerPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                imageVector = if (isPlayerPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(20.dp)
@@ -503,7 +516,7 @@ private fun AnswerCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                formatTime(if (isPlaying) position else 0),
+                                formatTime(position),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -523,7 +536,11 @@ private fun AnswerCard(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(if (isPlaying && duration > 0) position.toFloat() / duration.toFloat() else 0f)
+                                    .fillMaxWidth(
+                                        if (duration > 0) {
+                                            (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                                        } else 0f
+                                    )
                                     .fillMaxHeight()
                                     .clip(RoundedCornerShape(2.dp))
                                     .background(MaterialTheme.colorScheme.primary)

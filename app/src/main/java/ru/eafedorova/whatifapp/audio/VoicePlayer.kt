@@ -4,6 +4,7 @@ import android.media.MediaPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,17 +27,18 @@ class VoicePlayer {
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
     private var progressJob: Job? = null
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     fun play(filePath: String, onComplete: () -> Unit = {}) {
-        if (player != null && currentPath == filePath) {
+        if (currentPath == filePath && player != null) {
+            if (_isPlaying.value) return
             player?.start()
             _isPlaying.value = true
             startProgressUpdates()
             return
         }
 
-        stop()
+        releasePlayer()
 
         val file = File(filePath)
         if (!file.exists()) {
@@ -44,68 +46,91 @@ class VoicePlayer {
             return
         }
 
-        player = MediaPlayer().apply {
-            setDataSource(filePath)
-            prepare()
-            start()
-            setOnCompletionListener {
-                _isPlaying.value = false
-                _position.value = 0
-                stopProgressUpdates()
-                onComplete()
-            }
+        val mp = MediaPlayer()
+        player = mp
+        currentPath = filePath
+
+        try {
+            mp.setDataSource(filePath)
+            mp.prepare()
+            mp.start()
+        } catch (e: Exception) {
+            releasePlayer()
+            onComplete()
+            return
         }
 
-        currentPath = filePath
-        _duration.value = player?.duration ?: 0
+        mp.setOnCompletionListener {
+            releasePlayer()
+            onComplete()
+        }
+
+        _duration.value = mp.duration
         _position.value = 0
         _isPlaying.value = true
         startProgressUpdates()
     }
 
     fun pause() {
-        if (player?.isPlaying == true) {
-            player?.pause()
+        val mp = player ?: return
+        if (mp.isPlaying) {
+            mp.pause()
             _isPlaying.value = false
             stopProgressUpdates()
         }
     }
 
     fun resume() {
-        if (player != null && !player!!.isPlaying) {
-            player?.start()
+        val mp = player ?: return
+        if (!mp.isPlaying) {
+            mp.start()
             _isPlaying.value = true
             startProgressUpdates()
         }
     }
 
     fun stop() {
+        releasePlayer()
+    }
+
+    fun isCurrentFile(filePath: String): Boolean = currentPath == filePath
+
+    /**
+     * Единственное место, где освобождается MediaPlayer.
+     * Идемпотентно: можно вызывать сколько угодно раз.
+     */
+    private fun releasePlayer() {
         stopProgressUpdates()
-        try {
-            player?.stop()
-        } catch (_: Exception) {
-        }
-        player?.release()
+        val mp = player
         player = null
         currentPath = null
+        if (mp != null) {
+            try {
+                if (mp.isPlaying) mp.stop()
+            } catch (_: IllegalStateException) {
+            }
+            try {
+                mp.reset()
+            } catch (_: IllegalStateException) {
+            }
+            mp.release()
+        }
         _isPlaying.value = false
         _position.value = 0
         _duration.value = 0
     }
 
-    fun isCurrentFile(filePath: String): Boolean = currentPath == filePath
-
     private fun startProgressUpdates() {
         stopProgressUpdates()
         progressJob = scope.launch {
             while (true) {
-                player?.let { mp ->
-                    try {
-                        _position.value = mp.currentPosition
-                    } catch (_: Exception) {
-                        break
-                    }
-                } ?: break
+                val mp = player ?: break
+                val pos = try {
+                    mp.currentPosition
+                } catch (_: IllegalStateException) {
+                    break
+                }
+                _position.value = pos
                 delay(200)
             }
         }
